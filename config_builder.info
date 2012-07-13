@@ -1,0 +1,6 @@
+name = Configuration builder
+description = Create and manage custom configuration pages.
+dependencies[] = ctools
+dependencies[] = form_builder
+configure = admin/structure/config_builder
+core = 7.x

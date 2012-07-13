@@ -1,0 +1,201 @@
+<?php
+/**
+ * @file
+ * Contains core functions for the Configuration Builder module.
+ */
+
+/**
+ * Include additional files.
+ */
+foreach (module_list() as $module) {
+  if (file_exists($file = dirname(__FILE__) . "/includes/{$module}.inc")) {
+    require_once $file;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function config_builder_permission() {
+  return array(
+    'administer config builder' => array(
+      'title' => t('Administer Configuration builder'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function config_builder_menu() {
+  $items = array();
+
+  foreach (config_builder_crud_load_all() as $config) {
+    $items[$config->path] = array(
+      'title' => $config->label,
+      'type' => MENU_NORMAL_ITEM,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('config_builder_page_callback', $config),
+      // @TODO - Configurable access controls.
+      'access arguments' => array('access administration pages'),
+    );
+  }
+
+  return $items;
+}
+
+/**
+ * CRUD function; Load configuration by name.
+ */
+function config_builder_crud_load($name) {
+  ctools_include('export');
+  return ctools_export_crud_load('config_builder', $name);
+}
+
+/**
+ * CRUD function; Load all configurations.
+ */
+function config_builder_crud_load_all() {
+  $configs = array();
+
+  ctools_include('export');
+  foreach (ctools_export_crud_load_all('config_builder') as $config) {
+    $configs[] = $config;
+  }
+
+  return $configs;
+}
+
+/**
+ * CRUD function; Load configuration index by id.
+ */
+function config_builder_crud_index_load($id, $config = NULL) {
+  $query = db_select('config_builder_index', 'cbi')
+    ->fields('cbi')
+    ->condition('id', $id);
+  if (!is_null($config)) {
+    $query->condition('config', $config);
+  }
+  $result = $query->range(0, 1)
+    ->execute()
+    ->fetch();
+  $result->default_value = unserialize($result->default_value);
+  return $result;
+}
+
+/**
+ * CRUD function; Load all configuration indexes.
+ */
+function config_builder_crud_index_load_all() {
+  $results = db_select('config_builder_index', 'cbi')
+    ->fields('cbi')
+    ->execute()
+    ->fetchAll();
+  foreach ($results as &$result) {
+    $result->default_value = unserialize($result->default_value);
+  }
+  return $results;
+}
+
+/**
+ * Rebuild Configuration builder index.
+ */
+function form_builder_crud_index_save($config = NULL) {
+  $configs = !is_null($config) ? array($config) : config_builder_crud_load_all();
+
+  foreach ($configs as $config) {
+    // Remove all existing entries for this configuration.
+    db_delete('config_builder_index')
+      ->condition('config', $config->name)
+      ->execute();
+
+    // Get FAPI elements from configuration.
+    $form = array();
+    ob_start();
+    eval($config->fapi);
+    ob_get_clean();
+
+    foreach (element_children($form) as $key) {
+      db_insert('config_builder_index')
+        ->fields(array(
+          'config' => $config->name,
+          'id' => $key,
+          'title' => $form[$key]['#title'],
+          'default_value' => serialize(isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : ''),
+          'description' => isset($form[$key]['#description']) ? $form[$key]['#description'] : '',
+        ))
+        ->execute();
+    }
+  }
+}
+
+/**
+ * Configuration Builder page callback.
+ */
+function config_builder_page_callback($form, $form_state, $config) {
+  ob_start();
+  eval($config->fapi);
+  ob_get_clean();
+
+  // Set default value on each item.
+  foreach (element_children($form) as $key) {
+    $form[$key]['#default_value'] = variable_get($key, isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : NULL);
+  }
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function config_builder_token_info() {
+  $info = array();
+
+  $indexes = config_builder_crud_index_load_all();
+  if (!empty($indexes)) {
+    foreach ($indexes as $index) {
+      // Basic token.
+      $info['tokens']['site']["config:{$index->id}"] = array(
+        'name' => $index->title,
+        'description' => t('Value of the "@name" configuration variable.', array('@name' => $index->id)),
+      );
+
+      // Token with ability to choose source of default value.
+      $info['tokens']['site']["config:{$index->id}:default:?"] = array(
+        'name' => $index->title,
+        'description' => t('Value of the "@name" configuration variable, using the default value from the provided Configuration page ID supplied.', array('@name' => $index->id)),
+      );
+    }
+  }
+
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function config_builder_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $sanitize = !empty($options['sanitize']);
+
+  $replacements = array();
+  if ('site' == $type) {
+    foreach ($tokens as $name => $original) {
+      $token = explode(':', $name);
+      if ('config' == $token[0]) {
+        $data = variable_get($token[1], NULL);
+        if (is_null($data)) {
+          if (isset($token[2]) && 'default' == $token[2] && isset($token[3])) {
+            $index = config_builder_crud_index_load($token[1], $token[3]);
+          }
+          else {
+            $index = config_builder_crud_index_load($token[1]);
+          }
+          $data = $index->default_value;
+        }
+        $replacements[$original] = $sanitize ? filter_xss($data) : $data;
+      }
+    }
+  }
+  return $replacements;
+}
+

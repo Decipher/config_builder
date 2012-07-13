@@ -1,0 +1,92 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the Configuration Builder module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function config_builder_schema() {
+  $schema = array();
+
+  $schema['config_builder'] = array(
+    'export' => array(
+      'key' => 'name',
+      'key name' => 'Name',
+      'primary key' => 'name',
+      'identifier' => 'config_builder',
+      'default hook' => 'config_builder_defaults',
+      'api' => array(
+        'owner' => 'config_builder',
+        'api' => 'config_builder',
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'label' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => ''
+      ),
+      'path' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'fapi' => array(
+        'type' => 'blob'
+      ),
+    ),
+    'primary key' => array('name'),
+  );
+
+  $schema['config_builder_index'] = array(
+    'fields' => array(
+      'config' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'id' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'default_value' => array(
+        'type' => 'blob',
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => ''
+      ),
+    ),
+  );
+
+  return $schema;
+}
