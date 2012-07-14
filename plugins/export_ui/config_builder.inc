@@ -66,12 +66,15 @@ function config_builder_export_ui_form(&$form, &$form_state) {
   );
 
   // Form builder.
-  $form['form_builder_id'] = array(
-    '#type' => 'hidden',
-    '#value' => isset($form_state['input']['form_builder_id'])
+  $form['form_builder_id'] = array('#type' => 'hidden');
+  if (!empty($item->name)) {
+    $form['form_builder_id']['#value'] = $item->name;
+  }
+  else {
+    $form['form_builder_id']['#value'] = isset($form_state['input']['form_builder_id'])
       ? $form_state['input']['form_builder_id']
-      : drupal_substr(md5(REQUEST_TIME . rand(1000, 9999)), 0, 32)
-  );
+      : drupal_substr(md5(REQUEST_TIME . rand(1000, 9999)), 0, 32);
+  }
 
   module_load_include('inc', 'form_builder', 'includes/form_builder.admin');
   module_load_include('inc', 'form_builder', 'includes/form_builder.api');
@@ -92,11 +95,20 @@ function config_builder_export_ui_form(&$form, &$form_state) {
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
-  $form['fapi']['form_builder'] = form_builder_preview($form, $form_state, $form_structure, $form_type, $form_id);
+  $form['fapi']['form_builder_preview'] = form_builder_preview($form, $form_state, $form_structure, $form_type, $form_id);
+  $form['fapi']['form_builder_positions'] = form_builder_positions($form, $form_state, $form_structure, $form_type, $form_id);
+  $form['fapi']['form_builder_positions']['#prefix'] = '<div id="form-builder-positions">';
+  $form['fapi']['form_builder_positions']['#suffix'] = '</div>';
+  unset($form['fapi']['form_builder_positions']['submit']);
 
   $form['buttons']['edit'] = array(
     '#type' => 'submit',
     '#value' => t('Save & Edit'),
+    '#limit_validation_errors' => array(
+      array('info'),
+      array('page'),
+    ),
+    '#submit' => array(),
   );
 }
 
@@ -108,13 +120,16 @@ function config_builder_export_ui_form_submit(&$form, &$form_state) {
   module_load_include('inc', 'form_builder', 'includes/form_builder.api');
   module_load_include('inc', 'form_builder', 'includes/form_builder.cache');
 
-  // @TODO - Reproduce this functionality or require form_builder_examples.module.
-  include drupal_get_path('module', 'form_builder') . '/examples/form_builder_examples.module';
-
-  $form_id = drupal_substr($form['form_build_id']['#value'], 0, 32);
+  $form_id = $form_state['values']['form_builder_id'];
   $form_cache = form_builder_cache_load('config_builder', $form_id);
-
   if (is_array($form_cache)) {
+    $form_builder_state = array('values' => $form_state['values']['form_builder_positions']);
+    $form['fapi']['form_builder_preview']['#form_builder']['form'] = $form_cache;
+    form_builder_positions_submit($form['fapi']['form_builder_preview'], $form_builder_state);
+
+    // @TODO - Reproduce this functionality or require form_builder_examples.module.
+    include_once drupal_get_path('module', 'form_builder') . '/examples/form_builder_examples.module';
+
     $form_state['item']->fapi = form_builder_examples_export_recurse($form_cache);
     $form_state['values']['fapi'] = $form_state['item']->fapi;
   }

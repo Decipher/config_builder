@@ -45,3 +45,5 @@ Roadmap
 
 - Configurable Menus and Access controls.
 - Exportable as standalone module.
+- Domain integration.
+

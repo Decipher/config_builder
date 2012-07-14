@@ -1,3 +1,11 @@
+Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
+--------------------------------------------------------------------------------
+
+- Added support for Fieldsets.
+- Fixed validation of Form builder items.
+
+
+
 Configuration builder 7.x-1.0-beta1, 2012-07-13
 --------------------------------------------------------------------------------
 

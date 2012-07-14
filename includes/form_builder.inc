@@ -19,15 +19,7 @@ function _config_builder_form_builder_load_form($config, $form_id) {
       ob_get_clean();
 
       if (isset($form)) {
-        foreach ($form as $key => &$element) {
-          $element['#key'] = $key;
-          $element['#form_builder'] = array(
-            'element_id' => $key,
-            'element_type' => $element['#type'],
-            'configurable' => TRUE,
-            'removable' => TRUE,
-          );
-        }
+        _config_builder_form_builder_prepare_element_recurse($form);
       }
       form_builder_cache_save('config_builder', $form_id, $form);
     }
@@ -37,10 +29,43 @@ function _config_builder_form_builder_load_form($config, $form_id) {
 }
 
 /**
+ * Recursively prepare form builder element.
+ */
+function _config_builder_form_builder_prepare_element_recurse(&$form) {
+  foreach (element_children($form) as $key) {
+    $form[$key]['#key'] = $key;
+    $form[$key]['#form_builder'] = array(
+      'element_id' => $key,
+      'element_type' => $form[$key]['#type'],
+      'configurable' => TRUE,
+      'removable' => TRUE,
+    );
+    _config_builder_form_builder_prepare_element_recurse($form[$key]);
+  }
+}
+
+/**
  * Implements hook_form_builder_types().
  */
 function config_builder_form_builder_types() {
   $fields = array();
+
+  $fields['fieldset'] = array(
+    'title' => t('Fieldset'),
+    'properties' => array(
+      'title',
+      'description',
+      'collapsible',
+      'collapsed',
+      'key',
+    ),
+    'default' => array(
+      '#title' => t('New fieldset'),
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    ),
+  );
 
   $fields['select'] = array(
     'title' => t('Select list'),

@@ -41,7 +41,7 @@ class config_builder_ui extends ctools_export_ui {
       $this->rows[$name]['data'][] = array('data' => check_plain($item->{$this->plugin['export']['admin_title']}), 'class' => array('ctools-export-ui-title'));
     }
     $this->rows[$name]['data'][] = array('data' => check_plain($name), 'class' => array('ctools-export-ui-name'));
-    $this->rows[$name]['data'][] = array('data' => l(check_plain(base_path() . $item->path), $item->path), 'class' => array('ctools-export-ui-path'));
+    $this->rows[$name]['data'][] = array('data' => l(base_path() . $item->path, $item->path), 'class' => array('ctools-export-ui-path'));
     $this->rows[$name]['data'][] = array('data' => check_plain($item->{$schema['export']['export type string']}), 'class' => array('ctools-export-ui-storage'));
 
     $ops = theme('links__ctools_dropbutton', array('links' => $operations, 'attributes' => array('class' => array('links', 'inline'))));
@@ -72,6 +72,84 @@ class config_builder_ui extends ctools_export_ui {
     $header[] = array('data' => t('Operations'), 'class' => array('ctools-export-ui-operations'));
 
     return $header;
+  }
+
+  /**
+   * Provide the actual editing form.
+   */
+  function edit_form(&$form, &$form_state) {
+    $export_key = $this->plugin['export']['key'];
+    $item = $form_state['item'];
+    $schema = ctools_export_get_schema($this->plugin['schema']);
+
+    if (!empty($this->plugin['export']['admin_title'])) {
+      $form['info'][$this->plugin['export']['admin_title']] = array(
+        '#type' => 'textfield',
+        '#title' => t('Administrative title'),
+        '#description' => t('This will appear in the administrative interface to easily identify it.'),
+        '#default_value' => $item->{$this->plugin['export']['admin_title']},
+      );
+    }
+
+    $form['info'][$export_key] = array(
+      '#title' => t($schema['export']['key name']),
+      '#type' => 'textfield',
+      '#default_value' => $item->{$export_key},
+      '#description' => t('The unique ID for this @export.', array('@export' => $this->plugin['title singular'])),
+      '#required' => TRUE,
+      '#maxlength' => 255,
+    );
+
+    if (!empty($this->plugin['export']['admin_title'])) {
+      $form['info'][$export_key]['#type'] = 'machine_name';
+      $form['info'][$export_key]['#machine_name'] = array(
+        'exists' => 'ctools_export_ui_edit_name_exists',
+        'source' => array('info', $this->plugin['export']['admin_title']),
+      );
+    }
+
+    if ($form_state['op'] === 'edit') {
+      $form['info'][$export_key]['#disabled'] = TRUE;
+      $form['info'][$export_key]['#value'] = $item->{$export_key};
+    }
+
+    if (!empty($this->plugin['export']['admin_description'])) {
+      $form['info'][$this->plugin['export']['admin_description']] = array(
+        '#type' => 'textarea',
+        '#title' => t('Administrative description'),
+        '#default_value' => $item->{$this->plugin['export']['admin_description']},
+      );
+    }
+
+    // Add plugin's form definitions.
+    if (!empty($this->plugin['form']['settings'])) {
+      // Pass $form by reference.
+      $this->plugin['form']['settings']($form, $form_state);
+    }
+
+    // Add the buttons if the wizard is not in use.
+    if (empty($form_state['form_info'])) {
+      // Make sure that whatever happens, the buttons go to the bottom.
+      $form['buttons']['#weight'] = 100;
+
+      // Add buttons.
+      $form['buttons']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save'),
+        '#limit_validation_errors' => array(
+          array('info'),
+          array('page'),
+        ),
+        '#submit' => array(),
+      );
+
+      $form['buttons']['delete'] = array(
+        '#type' => 'submit',
+        '#value' => $item->export_type & EXPORT_IN_CODE ? t('Revert') : t('Delete'),
+        '#access' => $form_state['op'] === 'edit' && $item->export_type & EXPORT_IN_DATABASE,
+        '#submit' => array('ctools_export_ui_edit_item_form_delete'),
+      );
+    }
   }
 
   /**
