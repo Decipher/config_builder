@@ -18,6 +18,9 @@ Features
 * Drag and Drop form builder interface.
 * Exportable via CTools and Features module.
 * Configuration variables provided as tokens.
+* Set page access by:
+  * User permission.
+  * User role(s).
 * Integrates with:
   * Drupal Contextual links module:
     - Adds a hover link for quick editing configuration pages.
@@ -40,10 +43,11 @@ Recommended Modules
 
 
 
-Roadmap
+Roadmap / Todo
 --------------------------------------------------------------------------------
 
-- Configurable Menus and Access controls.
+- Configurable Menus.
 - Exportable as standalone module.
 - Domain integration.
-
+- Improve tokens readability.
+- Add support for #tree in fieldsets.

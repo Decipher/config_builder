@@ -140,7 +140,7 @@ class config_builder_ui extends ctools_export_ui {
           array('info'),
           array('page'),
         ),
-        '#submit' => array(),
+        '#submit' => array('ctools_export_ui_edit_item_form_submit'),
       );
 
       $form['buttons']['delete'] = array(

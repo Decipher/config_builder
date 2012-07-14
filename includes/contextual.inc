@@ -52,26 +52,29 @@ function contextual_config_builder_tokens_alter(&$replacements, $context) {
         else {
           $index = config_builder_crud_index_load($token[1]);
         }
-        $config = config_builder_crud_load($index->config);
-
-        // Build contextually linked element.
-        $element = array(
-          'markup' => array(
-            '#markup' => $index->default_value,
-          ),
-          'contextual_links' => array(
-            '#type' => 'contextual_links',
-            '#contextual_links' => array(
-              'config_builder' => array($config->path, array()),
-            ),
-            '#element' => array(
-              '#markup' => $index->default_value,
-            ),
-          ),
-          '#prefix' => '<span class="contextual-links-region">',
-          '#suffix' => '</span>',
-        );
-        $replacements[$original] = render($element);
+        if ($index !== FALSE) {
+          $config = config_builder_crud_load($index->config);
+          if ($config !== FALSE) {
+            // Build contextually linked element.
+            $element = array(
+              'markup' => array(
+                '#markup' => $index->default_value,
+              ),
+              'contextual_links' => array(
+                '#type' => 'contextual_links',
+                '#contextual_links' => array(
+                  'config_builder' => array($config->path, array()),
+                ),
+                '#element' => array(
+                  '#markup' => $index->default_value,
+                ),
+              ),
+              '#prefix' => '<span class="contextual-links-region">',
+              '#suffix' => '</span>',
+            );
+            $replacements[$original] = render($element);
+          }
+        }
       }
     }
   }

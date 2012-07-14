@@ -57,12 +57,78 @@ function config_builder_export_ui_form(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
+
   $form['page']['path'] = array(
     '#type' => 'textfield',
     '#title' => t('Path'),
     '#field_prefix' => $GLOBALS['base_url'] . base_path(),
     '#default_value' => $item->path,
     '#required' => TRUE,
+  );
+
+  $form['page']['access'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Access'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+  );
+
+  $form['page']['access']['type'] = array(
+    '#type' => 'select',
+    '#title' => t('Type'),
+    '#options' => array(
+      'user_access' => t('Permission'),
+      'config_builder_role_access' => t('Role'),
+    ),
+    '#default_value' => isset($item->access['type']) ? $item->access['type'] : NULL,
+  );
+
+  // Get list of permissions.
+  $perms = array();
+  $module_info = system_get_info('module');
+  foreach (module_implements('permission') as $module) {
+    $permissions = module_invoke($module, 'permission');
+    foreach ($permissions as $name => $perm) {
+      $perms[$module_info[$module]['name']][$name] = strip_tags($perm['title']);
+    }
+  }
+  ksort($perms);
+
+  $form['page']['access']['user_access'] = array(
+    '#type' => 'select',
+    '#title' => t('Permission'),
+    '#options' => $perms,
+    '#default_value' => isset($item->access['user_access']) ? $item->access['user_access'] : NULL,
+    '#description' => t('Only users with the selected permission flag will be able to access this configuration page.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="access[type]"]' => array('value' => 'user_access'),
+      ),
+    ),
+  );
+
+  // Get a list of roles.
+  $roles = array();
+  $result = db_select('role', 'r')
+    ->fields('r')
+    ->execute()
+    ->fetchAll();
+  foreach ($result as $role) {
+    $roles[$role->name] = $role->name;
+  }
+
+  $form['page']['access']['config_builder_role_access'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Role'),
+    '#options' => $roles,
+    '#default_value' => isset($item->access['config_builder_role_access']) ? $item->access['config_builder_role_access'] : array(),
+    '#description' => t('Only the checked roles will be able to access this configuration page.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="access[type]"]' => array('value' => 'config_builder_role_access'),
+      ),
+    ),
   );
 
   // Form builder.
@@ -108,7 +174,7 @@ function config_builder_export_ui_form(&$form, &$form_state) {
       array('info'),
       array('page'),
     ),
-    '#submit' => array(),
+    '#submit' => array('ctools_export_ui_edit_item_form_submit'),
   );
 }
 
@@ -116,36 +182,49 @@ function config_builder_export_ui_form(&$form, &$form_state) {
  * Submit callback for Custom Formatters settings form.
  */
 function config_builder_export_ui_form_submit(&$form, &$form_state) {
+  $form_state['input']['name'] = $form_state['item']->name;
+
   module_load_include('inc', 'form_builder', 'includes/form_builder.admin');
   module_load_include('inc', 'form_builder', 'includes/form_builder.api');
   module_load_include('inc', 'form_builder', 'includes/form_builder.cache');
 
-  $form_id = $form_state['values']['form_builder_id'];
+  $form_id = $form_state['input']['form_builder_id'];
   $form_cache = form_builder_cache_load('config_builder', $form_id);
   if (is_array($form_cache)) {
-    $form_builder_state = array('values' => $form_state['values']['form_builder_positions']);
+    $form_builder_state = array('values' => $form_state['input']['form_builder_positions']);
     $form['fapi']['form_builder_preview']['#form_builder']['form'] = $form_cache;
     form_builder_positions_submit($form['fapi']['form_builder_preview'], $form_builder_state);
 
-    // @TODO - Reproduce this functionality or require form_builder_examples.module.
-    include_once drupal_get_path('module', 'form_builder') . '/examples/form_builder_examples.module';
-
-    $form_state['item']->fapi = form_builder_examples_export_recurse($form_cache);
-    $form_state['values']['fapi'] = $form_state['item']->fapi;
+    $form_state['item']->fapi = _config_builder_form_builder_export_recurse($form_cache);
+    $form_state['input']['fapi'] = $form_state['item']->fapi;
   }
 
   // Remove the cached form_builder form.
   form_builder_cache_delete('config_builder', $form_id);
 
   // Rebuild the Configuration builder index.
-  form_builder_crud_index_save((object) $form_state['values']);
+  form_builder_crud_index_save((object) $form_state['input']);
 
   // Flush all caches.
   variable_set('menu_rebuild_needed', TRUE);
   drupal_flush_all_caches();
 
-  if ($form_state['values']['op'] == t('Save & Edit')) {
-    $destination = "admin/structure/config_builder/list/{$form_state['values']['name']}/edit";
+  // Something weird is causing $form_state['values'] not to work correctly,
+  // this is a temporary workaround until the source of the issue is found.
+  $form_state['values'] = $form_state['input'];
+
+  // Access settings.
+  foreach ($form_state['values']['access'] as $key => &$value) {
+    if (is_array($value)) {
+      $value = array_filter($value);
+    }
+    if ('type' != $key && $key != $form_state['values']['access']['type']) {
+      unset($form_state['values']['access'][$key]);
+    }
+  }
+
+  if (t('Save & Edit') == $form_state['input']['op']) {
+    $destination = "admin/structure/config_builder/list/{$form_state['input']['name']}/edit";
     $_GET['destination'] = isset($_GET['destination']) ? "{$destination}?destination={$_GET['destination']}" : $destination;
   }
 }

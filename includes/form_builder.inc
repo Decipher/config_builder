@@ -18,9 +18,7 @@ function _config_builder_form_builder_load_form($config, $form_id) {
       eval($config->fapi);
       ob_get_clean();
 
-      if (isset($form)) {
-        _config_builder_form_builder_prepare_element_recurse($form);
-      }
+      _config_builder_form_builder_prepare_element_recurse($form);
       form_builder_cache_save('config_builder', $form_id, $form);
     }
   }
@@ -42,6 +40,67 @@ function _config_builder_form_builder_prepare_element_recurse(&$form) {
     );
     _config_builder_form_builder_prepare_element_recurse($form[$key]);
   }
+}
+
+/**
+ * Recursive function for pretty-printing of FAPI arrays.
+ */
+function _config_builder_form_builder_export_recurse($form, $parents = array()) {
+  $output = '';
+
+  // Sort this level of the array according to weight.
+  uasort($form, 'element_sort');
+
+  // Print out this parent element and it's properties.
+  $properties = element_properties($form);
+  $omit = array('#form_builder', '#key');
+  if (count($properties)) {
+    $output .= _config_builder_form_builder_export_variable_name($parents) . " = array(\n";
+    foreach (element_properties($form) as $property) {
+      if (!in_array($property, $omit)) {
+        if (is_array($form[$property])) {
+          $output .= "  '". $property . "' => array(\n";
+          foreach ($form[$property] as $key => $value) {
+            if ($property == '#options') {
+              $output .= "    '" . $key . "' => t('". $value ."'),\n";
+            }
+            else {
+              $output .= "    '" . $key . "' => '". $value ."',\n";
+            }
+          }
+          $output .= "  ),\n";
+        }
+        else {
+          if (($property == '#title') || ($property == '#description')) {
+            $output .= "  '". $property . "' => t('" . str_replace("'", "\'", $form[$property]) ."'),\n";
+          }
+          else {
+            $output .= "  '". $property . "' => '" . $form[$property] ."',\n";
+          }
+        }
+      }
+    }
+    $output .= ");\n";
+  }
+  else {
+    $output .= _config_builder_form_builder_export_variable_name($parents) . " = array();\n";
+  }
+
+  foreach (element_children($form) as $key) {
+    $parents[] = $key;
+    $output .= _config_builder_form_builder_export_recurse($form[$key], $parents);
+    array_pop($parents);
+  }
+
+  return $output;
+}
+
+function _config_builder_form_builder_export_variable_name($parents) {
+  $output = '$form';
+  foreach ($parents as $parent) {
+    $output .= "['". $parent ."']";
+  }
+  return $output;
 }
 
 /**

@@ -2,7 +2,10 @@ Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
 --------------------------------------------------------------------------------
 
 - Added support for Fieldsets.
+- Added example Configuration page.
+- Added configurable access settings.
 - Fixed validation of Form builder items.
+- Fixed issue with single quotation marks in description fields.
 
 
 

@@ -49,6 +49,13 @@ function config_builder_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'access' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'serialize' => TRUE,
+      ),
       'fapi' => array(
         'type' => 'blob'
       ),
@@ -79,14 +86,19 @@ function config_builder_schema() {
       'default_value' => array(
         'type' => 'blob',
       ),
-      'description' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-        'default' => ''
-      ),
     ),
   );
 
   return $schema;
+}
+
+/**
+ * Add 'access' field to 'config_builder' table and remove 'description' field from 'config_builder_index' table.
+ */
+function config_builder_update_7100() {
+  // Add 'access' field to 'config_builder' table.
+  db_add_field('config_builder', 'access', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+
+  // Remove 'description' field from 'config_builder_index' table.
+  db_drop_field('config_builder_index', 'description');
 }

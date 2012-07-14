@@ -36,8 +36,8 @@ function config_builder_menu() {
       'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('config_builder_page_callback', $config),
-      // @TODO - Configurable access controls.
-      'access arguments' => array('access administration pages'),
+      'access callback' => $config->access['type'],
+      'access arguments' => array($config->access[$config->access['type']]),
     );
   }
 
@@ -45,22 +45,57 @@ function config_builder_menu() {
 }
 
 /**
+ * Access callback for user roles.
+ */
+function config_builder_role_access($roles) {
+  global $user;
+  foreach ($roles as $role) {
+    if (in_array($role, $user->roles)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function config_builder_module_implements_alter(&$implementations, $hook) {
+  if ('menu' == $hook) {
+    unset($implementations['config_builder']);
+    $implementations['config_builder'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_flush_caches().
+ */
+function config_builder_flush_caches() {
+  db_delete('form_builder_cache')
+    ->condition('type', 'config_builder')
+    ->execute();
+}
+
+/**
  * CRUD function; Load configuration by name.
  */
 function config_builder_crud_load($name) {
   ctools_include('export');
-  return ctools_export_crud_load('config_builder', $name);
+  $config = ctools_export_crud_load('config_builder', $name);
+  return !empty($config) ? $config : FALSE;
 }
 
 /**
  * CRUD function; Load all configurations.
  */
-function config_builder_crud_load_all() {
+function config_builder_crud_load_all($disabled = FALSE) {
   $configs = array();
 
   ctools_include('export');
   foreach (ctools_export_crud_load_all('config_builder') as $config) {
-    $configs[] = $config;
+    if ($disabled || empty($config->disabled)) {
+      $configs[] = $config;
+    }
   }
 
   return $configs;
@@ -79,8 +114,11 @@ function config_builder_crud_index_load($id, $config = NULL) {
   $result = $query->range(0, 1)
     ->execute()
     ->fetch();
-  $result->default_value = unserialize($result->default_value);
-  return $result;
+  if (!empty($result)) {
+    $result->default_value = unserialize($result->default_value);
+    return $result;
+  }
+  return FALSE;
 }
 
 /**
@@ -115,17 +153,27 @@ function form_builder_crud_index_save($config = NULL) {
     eval($config->fapi);
     ob_get_clean();
 
-    foreach (element_children($form) as $key) {
+    // Index each item.
+    _config_builder_recurse_index($form, $config);
+  }
+}
+
+/**
+ * Recursively add default values to form elements.
+ */
+function _config_builder_recurse_index(&$form, $config) {
+  foreach (element_children($form) as $key) {
+    if (!in_array($form[$key]['#type'], array('fieldset'))) {
       db_insert('config_builder_index')
         ->fields(array(
           'config' => $config->name,
           'id' => $key,
           'title' => $form[$key]['#title'],
           'default_value' => serialize(isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : ''),
-          'description' => isset($form[$key]['#description']) ? $form[$key]['#description'] : '',
         ))
         ->execute();
     }
+    _config_builder_recurse_index($form[$key], $config);
   }
 }
 
@@ -138,11 +186,22 @@ function config_builder_page_callback($form, $form_state, $config) {
   ob_get_clean();
 
   // Set default value on each item.
-  foreach (element_children($form) as $key) {
-    $form[$key]['#default_value'] = variable_get($key, isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : NULL);
-  }
+  _config_builder_recurse_defaults($form);
 
   return system_settings_form($form);
+}
+
+/**
+ * Recursively add default values to form elements.
+ */
+function _config_builder_recurse_defaults(&$form) {
+  foreach (element_children($form) as $key) {
+    if (!in_array($form[$key]['#type'], array('fieldset'))) {
+      $default = isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : NULL;
+      $form[$key]['#default_value'] = variable_get($key, $default);
+    }
+    _config_builder_recurse_defaults($form[$key]);
+  }
 }
 
 /**
@@ -190,7 +249,9 @@ function config_builder_tokens($type, $tokens, array $data = array(), array $opt
           else {
             $index = config_builder_crud_index_load($token[1]);
           }
-          $data = $index->default_value;
+          if ($index !== FALSE) {
+            $data = $index->default_value;
+          }
         }
         $replacements[$original] = $sanitize ? filter_xss($data) : $data;
       }
