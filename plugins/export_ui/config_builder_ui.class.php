@@ -153,18 +153,23 @@ class config_builder_ui extends ctools_export_ui {
   }
 
   /**
-   * Callback to enable a page.
+   * Set an item's state to enabled or disabled and output to user.
+   *
+   * If javascript is in use, this will rebuild the list and send that back
+   * as though the filter form had been executed.
    */
-  function enable_page($js, $input, $item) {
-    drupal_flush_all_caches();
-    return $this->set_item_state(FALSE, $js, $input, $item);
-  }
+  function set_item_state($state, $js, $input, $item) {
+    ctools_export_crud_set_status($this->plugin['schema'], $item, $state);
 
-  /**
-   * Callback to disable a page.
-   */
-  function disable_page($js, $input, $item) {
+    // Rebuild index and flush caches.
+    form_builder_crud_index_save();
     drupal_flush_all_caches();
-    return $this->set_item_state(TRUE, $js, $input, $item);
+
+    if (!$js) {
+      drupal_goto(ctools_export_ui_plugin_base_path($this->plugin));
+    }
+    else {
+      return $this->list_page($js, $input);
+    }
   }
 }

@@ -49,5 +49,4 @@ Roadmap / Todo
 - Configurable Menus.
 - Exportable as standalone module.
 - Domain integration.
-- Improve tokens readability.
 - Add support for #tree in fieldsets.

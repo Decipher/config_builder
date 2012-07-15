@@ -18,63 +18,59 @@ function contextual_config_builder_form_config_builder_page_callback_alter(&$for
  * contextual.module.
  */
 function contextual_config_builder_token_info_alter(&$info) {
-  $indexes = config_builder_crud_index_load_all();
-  if (!empty($indexes)) {
-    foreach ($indexes as $index) {
-      // Basic token.
-      $info['tokens']['site']["config:{$index->id}:contextual"] = array(
-        'name' => $index->title,
-        'description' => t('Value of the "@name" configuration variable with a Contextual link to the configuration form.', array('@name' => $index->id)),
-      );
+  $info['tokens']['config-variable']['contextual'] = array(
+    'name' => 'Contextually linked variable',
+    'description' => t('Value with contextual link to the default configuration page.'),
+  );
 
-      // Token with ability to choose source of default value.
-      $info['tokens']['site']["config:{$index->id}:contextual:?"] = array(
-        'name' => $index->title,
-        'description' => t('Value of the "@name" configuration variable with a Contextual link to the provided configuration form.', array('@name' => $index->id)),
-      );
-    }
-
-    ksort($info['tokens']['site']);
-  }
+  $info['tokens']['config-variable']['contextual:?'] = array(
+    'name' => 'Contextually linked variable',
+    'description' => t('Value with contextual link to the provided configuration page.'),
+  );
 }
 
 /**
  * Implements hook_config_builder_tokens_alter() on behalf of contextual.module.
  */
 function contextual_config_builder_tokens_alter(&$replacements, $context) {
-  if ('site' == $context['type']) {
+  if ('config-variable' == $context['type']) {
     foreach ($context['tokens'] as $name => $original) {
       $token = explode(':', $name);
-      if ('config' == $token[0] && isset($token[2]) && $token[2] == 'contextual') {
-        if (isset($token[3])) {
-          $index = config_builder_crud_index_load($token[1], $token[3]);
-        }
-        else {
-          $index = config_builder_crud_index_load($token[1]);
-        }
-        if ($index !== FALSE) {
-          $config = config_builder_crud_load($index->config);
-          if ($config !== FALSE) {
-            // Build contextually linked element.
-            $element = array(
-              'markup' => array(
-                '#markup' => $index->default_value,
-              ),
-              'contextual_links' => array(
-                '#type' => 'contextual_links',
-                '#contextual_links' => array(
-                  'config_builder' => array($config->path, array()),
-                ),
-                '#element' => array(
-                  '#markup' => $index->default_value,
-                ),
-              ),
-              '#prefix' => '<span class="contextual-links-region">',
-              '#suffix' => '</span>',
-            );
-            $replacements[$original] = render($element);
+      $variable_data = $context['data']['config-variable'];
+
+      switch ($token[1]) {
+        case 'contextual':
+          if (is_null($variable_data) && isset($token[2])) {
+            $index = config_builder_crud_index_load($token[0], $token[2]);
+            $variable_data = $index->default_value;
           }
-        }
+          else {
+            $index = config_builder_crud_index_load($token[0]);
+          }
+          if ($index !== FALSE) {
+            $config = config_builder_crud_load($index->config);
+            if ($config !== FALSE) {
+              // Build contextually linked element.
+              $element = array(
+                'markup' => array(
+                  '#markup' => $variable_data,
+                ),
+                'contextual_links' => array(
+                  '#type' => 'contextual_links',
+                  '#contextual_links' => array(
+                    'config_builder' => array($config->path, array()),
+                  ),
+                  '#element' => array(
+                    '#markup' => $variable_data,
+                  ),
+                ),
+                '#prefix' => '<span class="contextual-links-region">',
+                '#suffix' => '</span>',
+              );
+              $replacements[$original] = render($element);
+            }
+          }
+          break;
       }
     }
   }

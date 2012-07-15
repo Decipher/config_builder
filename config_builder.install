@@ -93,11 +93,22 @@ function config_builder_schema() {
 }
 
 /**
- * Add 'access' field to 'config_builder' table and remove 'description' field from 'config_builder_index' table.
+ * Add 'access' field to 'config_builder' table, update access defaults and
+ * remove 'description' field from 'config_builder_index' table.
  */
 function config_builder_update_7100() {
   // Add 'access' field to 'config_builder' table.
   db_add_field('config_builder', 'access', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+
+  // Update access defaults.
+  ctools_include('export');
+  foreach (ctools_export_crud_load_all('config_builder') as $config) {
+    $config->access = array(
+      'type' => 'user_access',
+      'user_access' => 'administer site configuration',
+    );
+    ctools_export_crud_save('config_builder', $config);
+  }
 
   // Remove 'description' field from 'config_builder_index' table.
   db_drop_field('config_builder_index', 'description');

@@ -30,7 +30,7 @@ function config_builder_permission() {
 function config_builder_menu() {
   $items = array();
 
-  foreach (config_builder_crud_load_all() as $config) {
+  foreach (config_builder_crud_load_all(FALSE, TRUE) as $config) {
     $items[$config->path] = array(
       'title' => $config->label,
       'type' => MENU_NORMAL_ITEM,
@@ -74,6 +74,7 @@ function config_builder_flush_caches() {
   db_delete('form_builder_cache')
     ->condition('type', 'config_builder')
     ->execute();
+  form_builder_crud_index_save();
 }
 
 /**
@@ -88,11 +89,11 @@ function config_builder_crud_load($name) {
 /**
  * CRUD function; Load all configurations.
  */
-function config_builder_crud_load_all($disabled = FALSE) {
+function config_builder_crud_load_all($disabled = FALSE, $reset = FALSE) {
   $configs = array();
 
   ctools_include('export');
-  foreach (ctools_export_crud_load_all('config_builder') as $config) {
+  foreach (ctools_export_crud_load_all('config_builder', $reset) as $config) {
     if ($disabled || empty($config->disabled)) {
       $configs[] = $config;
     }
@@ -139,7 +140,7 @@ function config_builder_crud_index_load_all() {
  * Rebuild Configuration builder index.
  */
 function form_builder_crud_index_save($config = NULL) {
-  $configs = !is_null($config) ? array($config) : config_builder_crud_load_all();
+  $configs = !is_null($config) ? array($config) : config_builder_crud_load_all(TRUE);
 
   foreach ($configs as $config) {
     // Remove all existing entries for this configuration.
@@ -147,14 +148,16 @@ function form_builder_crud_index_save($config = NULL) {
       ->condition('config', $config->name)
       ->execute();
 
-    // Get FAPI elements from configuration.
-    $form = array();
-    ob_start();
-    eval($config->fapi);
-    ob_get_clean();
+    if (empty($config->disabled)) {
+      // Get FAPI elements from configuration.
+      $form = array();
+      ob_start();
+      eval($config->fapi);
+      ob_get_clean();
 
-    // Index each item.
-    _config_builder_recurse_index($form, $config);
+      // Index each item.
+      _config_builder_recurse_index($form, $config);
+    }
   }
 }
 
@@ -212,17 +215,33 @@ function config_builder_token_info() {
 
   $indexes = config_builder_crud_index_load_all();
   if (!empty($indexes)) {
+    $info['types']['config'] = array(
+      'name' => t('Configuration builder variables'),
+      'description' => t('Tokens related to configuration builder values.'),
+    );
+
+    $info['types']['config-variable'] = array(
+      'name' => t('Configuration builder variable'),
+      'description' => t('Tokens for configuration builder variable.'),
+      'needs-data' => 'config-variable',
+    );
+
+    $info['tokens']['config-variable']['default:?'] = array(
+      'name' => 'Default value from source',
+      'description' => t('Value using the default value from the provided configuration page.'),
+    );
+
+    $info['tokens']['site']['config'] = array(
+      'name' => 'Configuration builder variables',
+      'description' => t('Configuration builder variables.'),
+      'type' => 'config',
+    );
+
     foreach ($indexes as $index) {
-      // Basic token.
-      $info['tokens']['site']["config:{$index->id}"] = array(
+      $info['tokens']['config'][$index->id] = array(
         'name' => $index->title,
         'description' => t('Value of the "@name" configuration variable.', array('@name' => $index->id)),
-      );
-
-      // Token with ability to choose source of default value.
-      $info['tokens']['site']["config:{$index->id}:default:?"] = array(
-        'name' => $index->title,
-        'description' => t('Value of the "@name" configuration variable, using the default value from the provided Configuration page ID supplied.', array('@name' => $index->id)),
+        'type' => 'config-variable',
       );
     }
   }
@@ -237,26 +256,49 @@ function config_builder_tokens($type, $tokens, array $data = array(), array $opt
   $sanitize = !empty($options['sanitize']);
 
   $replacements = array();
-  if ('site' == $type) {
-    foreach ($tokens as $name => $original) {
-      $token = explode(':', $name);
-      if ('config' == $token[0]) {
-        $data = variable_get($token[1], NULL);
-        if (is_null($data)) {
-          if (isset($token[2]) && 'default' == $token[2] && isset($token[3])) {
-            $index = config_builder_crud_index_load($token[1], $token[3]);
-          }
-          else {
-            $index = config_builder_crud_index_load($token[1]);
-          }
-          if ($index !== FALSE) {
-            $data = $index->default_value;
-          }
+
+  switch ($type) {
+    case 'config':
+      foreach ($tokens as $name => $original) {
+        $token = explode(':', $name);
+        $variable_data = variable_get($token[0], NULL);
+        if (isset($token[1])) {
+          $replacements += token_generate('config-variable', array($name => $original), array('config-variable' => $variable_data), $options);
         }
-        $replacements[$original] = $sanitize ? filter_xss($data) : $data;
+        else {
+          if (is_null($variable_data)) {
+            $index = config_builder_crud_index_load($token[0]);
+            $variable_data = $index->default_value;
+          }
+          $replacements[$original] = $variable_data;
+        }
       }
-    }
+      break;
+
+    case 'config-variable':
+      foreach ($tokens as $name => $original) {
+        $token = explode(':', $name);
+        $variable_data = $data['config-variable'];
+
+        switch ($token[1]) {
+          case 'default':
+            if (is_null($variable_data) && isset($token[2])) {
+              $index = config_builder_crud_index_load($token[0], $token[2]);
+              $variable_data = $index->default_value;
+            }
+            $replacements[$original] = $variable_data;
+            break;
+        }
+      }
+      break;
+
+    case 'site':
+      if ($config_tokens = token_find_with_prefix($tokens, 'config')) {
+        $replacements += token_generate('config', $config_tokens, array(), $options);
+      }
+      break;
   }
+
   return $replacements;
 }
 
