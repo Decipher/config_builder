@@ -117,6 +117,7 @@ function config_builder_form_builder_types() {
       'collapsible',
       'collapsed',
       'key',
+      'tree',
     ),
     'default' => array(
       '#title' => t('New fieldset'),
@@ -247,4 +248,33 @@ function config_builder_form_builder_types() {
   return array(
     'config_builder' => $fields
   );
+}
+
+/**
+ * Implements hook_form_builder_properties().
+ */
+function config_builder_form_builder_properties($form_type) {
+  $properties = array();
+  if ('config_builder' == $form_type) {
+    $properties['tree'] = array(
+      'form' => 'config_builder_property_tree_form',
+    );
+  }
+  drupal_alter('config_builder_form_builder_properties', $properties, $form_type);
+  return $properties;
+}
+
+/**
+ * Configuration form for the "tree" property.
+ */
+function config_builder_property_tree_form(&$form_state, $form_type, $element, $property) {
+  $form = array();
+
+  $form['tree'] = array(
+    '#title' => t('Tree'),
+    '#type' => 'checkbox',
+    '#default_value' => $element['#tree'],
+  );
+
+  return $form;
 }

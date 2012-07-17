@@ -65,6 +65,7 @@ function config_builder_module_implements_alter(&$implementations, $hook) {
     unset($implementations['config_builder']);
     $implementations['config_builder'] = FALSE;
   }
+  drupal_alter('config_builder_module_implements', $implementations, $hook);
 }
 
 /**
@@ -166,11 +167,12 @@ function form_builder_crud_index_save($config = NULL) {
  */
 function _config_builder_recurse_index(&$form, $config) {
   foreach (element_children($form) as $key) {
-    if (!in_array($form[$key]['#type'], array('fieldset'))) {
+    if (!in_array($form[$key]['#type'], array('fieldset')) && isset($form[$key]['#title'])) {
       db_insert('config_builder_index')
         ->fields(array(
           'config' => $config->name,
           'id' => $key,
+          'type' => $form[$key]['#type'],
           'title' => $form[$key]['#title'],
           'default_value' => serialize(isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : ''),
         ))
@@ -279,7 +281,6 @@ function config_builder_tokens($type, $tokens, array $data = array(), array $opt
       foreach ($tokens as $name => $original) {
         $token = explode(':', $name);
         $variable_data = $data['config-variable'];
-
         switch ($token[1]) {
           case 'default':
             if (is_null($variable_data) && isset($token[2])) {

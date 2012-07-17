@@ -171,8 +171,13 @@ function config_builder_export_ui_form(&$form, &$form_state) {
     '#type' => 'submit',
     '#value' => t('Save & Edit'),
     '#limit_validation_errors' => array(
-      array('info'),
-      array('page'),
+      array('access'),
+      array('description'),
+      array('form_builder_id'),
+      array('form_builder_positions'),
+      array('label'),
+      array('name'),
+      array('path'),
     ),
     '#submit' => array('ctools_export_ui_edit_item_form_submit'),
   );
@@ -182,36 +187,33 @@ function config_builder_export_ui_form(&$form, &$form_state) {
  * Submit callback for Custom Formatters settings form.
  */
 function config_builder_export_ui_form_submit(&$form, &$form_state) {
-  $form_state['input']['name'] = $form_state['item']->name;
-
   module_load_include('inc', 'form_builder', 'includes/form_builder.admin');
   module_load_include('inc', 'form_builder', 'includes/form_builder.api');
   module_load_include('inc', 'form_builder', 'includes/form_builder.cache');
 
-  $form_id = $form_state['input']['form_builder_id'];
+  $form_id = $form_state['values']['form_builder_id'];
   $form_cache = form_builder_cache_load('config_builder', $form_id);
+  $form_state['values']['fapi'] = '$form = array();';
   if (is_array($form_cache)) {
-    $form_builder_state = array('values' => $form_state['input']['form_builder_positions']);
-    $form['fapi']['form_builder_preview']['#form_builder']['form'] = $form_cache;
-    form_builder_positions_submit($form['fapi']['form_builder_preview'], $form_builder_state);
+    if (isset($form_state['values']['form_builder_positions'])) {
+      $form_builder_state = array('values' => $form_state['values']['form_builder_positions']);
+      $form['fapi']['form_builder_preview']['#form_builder']['form'] = $form_cache;
+      form_builder_positions_submit($form['fapi']['form_builder_preview'], $form_builder_state);
+    }
 
     $form_state['item']->fapi = _config_builder_form_builder_export_recurse($form_cache);
-    $form_state['input']['fapi'] = $form_state['item']->fapi;
+    $form_state['values']['fapi'] = $form_state['item']->fapi;
   }
 
   // Remove the cached form_builder form.
   form_builder_cache_delete('config_builder', $form_id);
 
   // Rebuild the Configuration builder index.
-  form_builder_crud_index_save((object) $form_state['input']);
+  form_builder_crud_index_save((object) $form_state['values']);
 
   // Flush all caches.
   variable_set('menu_rebuild_needed', TRUE);
   drupal_flush_all_caches();
-
-  // Something weird is causing $form_state['values'] not to work correctly,
-  // this is a temporary workaround until the source of the issue is found.
-  $form_state['values'] = $form_state['input'];
 
   // Access settings.
   foreach ($form_state['values']['access'] as $key => &$value) {
@@ -223,8 +225,8 @@ function config_builder_export_ui_form_submit(&$form, &$form_state) {
     }
   }
 
-  if (t('Save & Edit') == $form_state['input']['op']) {
-    $destination = "admin/structure/config_builder/list/{$form_state['input']['name']}/edit";
+  if (t('Save & Edit') == $form_state['values']['op']) {
+    $destination = "admin/structure/config_builder/list/{$form_state['values']['name']}/edit";
     $_GET['destination'] = isset($_GET['destination']) ? "{$destination}?destination={$_GET['destination']}" : $destination;
   }
 }

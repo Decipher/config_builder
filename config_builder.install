@@ -77,6 +77,12 @@ function config_builder_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
       'title' => array(
         'type' => 'varchar',
         'length' => 128,
@@ -112,4 +118,13 @@ function config_builder_update_7100() {
 
   // Remove 'description' field from 'config_builder_index' table.
   db_drop_field('config_builder_index', 'description');
+}
+
+
+/**
+ * Add 'type' field to 'config_builder_index' table.
+ */
+function config_builder_update_7101() {
+  // Add 'type' field to 'config_builder_index' table.
+  db_add_field('config_builder_index', 'type', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => ''));
 }

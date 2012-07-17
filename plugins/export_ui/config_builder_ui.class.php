@@ -137,8 +137,13 @@ class config_builder_ui extends ctools_export_ui {
         '#type' => 'submit',
         '#value' => t('Save'),
         '#limit_validation_errors' => array(
-          array('info'),
-          array('page'),
+          array('access'),
+          array('description'),
+          array('form_builder_id'),
+          array('form_builder_positions'),
+          array('label'),
+          array('name'),
+          array('path'),
         ),
         '#submit' => array('ctools_export_ui_edit_item_form_submit'),
       );
