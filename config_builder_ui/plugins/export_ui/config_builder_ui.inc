@@ -7,7 +7,7 @@
 /**
  * CTools Export UI required function for plugin definition
  */
-function config_builder_config_builder_ctools_export_ui() {
+function config_builder_ui_config_builder_ui_ctools_export_ui() {
   return array(
     'schema' => 'config_builder',
     'access' => 'administer config builder',
@@ -27,8 +27,8 @@ function config_builder_config_builder_ctools_export_ui() {
     'handler' => 'config_builder_ui',
 
     'form' => array(
-      'settings' => 'config_builder_export_ui_form',
-      'submit' => 'config_builder_export_ui_form_submit',
+      'settings' => 'config_builder_ui_export_ui_form',
+      'submit' => 'config_builder_ui_export_ui_form_submit',
     ),
 
     'export' => array(
@@ -41,7 +41,7 @@ function config_builder_config_builder_ctools_export_ui() {
 /**
  * Configuration Builder settings form.
  */
-function config_builder_export_ui_form(&$form, &$form_state) {
+function config_builder_ui_export_ui_form(&$form, &$form_state) {
   $item = $form_state['item'];
 
   // Basic information fieldset.
@@ -186,14 +186,14 @@ function config_builder_export_ui_form(&$form, &$form_state) {
 /**
  * Submit callback for Custom Formatters settings form.
  */
-function config_builder_export_ui_form_submit(&$form, &$form_state) {
+function config_builder_ui_export_ui_form_submit(&$form, &$form_state) {
   module_load_include('inc', 'form_builder', 'includes/form_builder.admin');
   module_load_include('inc', 'form_builder', 'includes/form_builder.api');
   module_load_include('inc', 'form_builder', 'includes/form_builder.cache');
 
   $form_id = $form_state['values']['form_builder_id'];
   $form_cache = form_builder_cache_load('config_builder', $form_id);
-  $form_state['values']['fapi'] = '$form = array();';
+  $form_state['values']['fapi'] = array();
   if (is_array($form_cache)) {
     if (isset($form_state['values']['form_builder_positions'])) {
       $form_builder_state = array('values' => $form_state['values']['form_builder_positions']);
@@ -201,7 +201,7 @@ function config_builder_export_ui_form_submit(&$form, &$form_state) {
       form_builder_positions_submit($form['fapi']['form_builder_preview'], $form_builder_state);
     }
 
-    $form_state['item']->fapi = _config_builder_form_builder_export_recurse($form_cache);
+    $form_state['item']->fapi = $form_cache;
     $form_state['values']['fapi'] = $form_state['item']->fapi;
   }
 

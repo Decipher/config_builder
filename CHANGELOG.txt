@@ -3,7 +3,9 @@ Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
 
 - Added '#tree' property for fieldsets.
 - Added initial Variable module integration.
+- Added UI module.
 - Fixed validation errors.
+- Removed all eval() functions.
 
 
 

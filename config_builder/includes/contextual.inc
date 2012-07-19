@@ -5,15 +5,6 @@
  */
 
 /**
- * Implements hook_config_builder_form_config_builder_page_callback_alter() on
- * behalf of contextual.module.
- */
-function contextual_config_builder_form_config_builder_page_callback_alter(&$form, $form_state) {
-  $config = $form_state['build_info']['args'][0];
-  $form['#contextual_links'] = array('config_builder' => array('admin/structure/config_builder/list', array($config->name, 'edit')));
-}
-
-/**
  * Implements hook_config_builder_token_info_alter() on behalf of
  * contextual.module.
  */
@@ -86,16 +77,6 @@ function config_builder_menu_contextual_links_alter(&$links, $router_item, $root
       $router_item,
       array(
         'title' => 'Edit value',
-      )
-    );
-  }
-
-  // Edit configuration page.
-  if ('admin/structure/config_builder/list/%/edit' == $root_path) {
-    $links['config_builder-edit'] = array_merge(
-      $router_item,
-      array(
-        'title' => 'Edit configuration page',
       )
     );
   }
