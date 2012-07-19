@@ -5,6 +5,31 @@
  */
 
 /**
+ * Implements hook_element_info()
+ */
+function config_builder_element_info() {
+  $types = array();
+
+  // A variable form element field
+  $types['variable_form_element'] = array(
+    '#input' => TRUE,
+    '#variable' => NULL,
+    '#process' => array('config_builder_element_process_variable_form_element', 'ajax_process_form'),
+    '#theme_wrappers' => array('form_element'),
+  );
+
+  return $types;
+}
+
+/**
+ * Process variable form element
+ */
+function config_builder_element_process_variable_form_element($element) {
+  $element += variable_edit_subform($element['#variable']);
+  return $element;
+}
+
+/**
  * Implements hook_config_builder_module_implements_alter() on behalf of
  * variable.module.
  */

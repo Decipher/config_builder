@@ -26,7 +26,7 @@ Features
   * Drupal Contextual links module:
     - Adds a hover link for quick editing configuration pages.
     - Adds contextual link tokens for quick editing variables.
-  * Variable module (requires patch - http://drupal.org/files/variable_form_element_element-1688586-8.patch):
+  * Variable module:
     - Adds Variable element for Form Builder for any declared variables.
     - Declares all created variables with hook_variable_info().
 

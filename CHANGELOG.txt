@@ -7,6 +7,7 @@ Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
 - Added initial Variable module integration.
 - Added UI module.
 - Added Configuration page blocks.
+- Added variable_form_element element.
 - Fixed validation errors.
 - Removed all eval() functions.
 
