@@ -44,7 +44,6 @@ function _config_builder_variable_type_map($type) {
     'fieldset' => 'array',
     'textfield' => 'string',
   );
-  dpm(variable_static('type'));
   return isset($map[$type]) ? $map[$type] : 'unknown';
 }
 
