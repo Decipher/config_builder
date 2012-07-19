@@ -21,10 +21,14 @@ Features
 * Set page access by:
   * User permission.
   * User role(s).
+* Provides a block per configuration page.
 * Integrates with:
   * Drupal Contextual links module:
     - Adds a hover link for quick editing configuration pages.
     - Adds contextual link tokens for quick editing variables.
+  * Variable module (requires patch - http://drupal.org/files/variable_form_element_element-1688586-8.patch):
+    - Adds Variable element for Form Builder for any declared variables.
+    - Declares all created variables with hook_variable_info().
 
 
 

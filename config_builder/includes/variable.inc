@@ -29,6 +29,12 @@ function config_builder_variable_info_alter(&$variables, $options) {
         'group' => $index->config,
         'module' => 'config_builder',
       );
+      switch ($index->type) {
+        case 'checkboxes':
+        case 'radios':
+          $variables[$index->id]['options'] = $index->element['#options'];
+          break;
+      }
     }
   }
 }
@@ -42,6 +48,11 @@ function _config_builder_variable_type_map($type) {
     // @TODO - Make a custom type for Fieldset, that renders the elements as
     // defined.
     'fieldset' => 'array',
+    'radios' => 'select',
+    // Select actually renders as Radio buttons, possibly an issue with Variable
+    // module type declarations.
+    'select' => 'unknown',
+    'textarea' => 'text',
     'textfield' => 'string',
   );
   return isset($map[$type]) ? $map[$type] : 'unknown';
@@ -65,59 +76,4 @@ function config_builder_variable_group_info() {
   }
 
   return $groups;
-}
-
-/**
- * Implements hook_config_builder_form_builder_types_alter() on behalf of
- * variable.module.
- */
-function variable_config_builder_form_builder_types_alter(&$fields) {
-  $fields['variable_form_element'] = array(
-    'title' => t('Variable'),
-    'properties' => array(
-      'variable',
-    ),
-    'default' => array(
-      '#type' => 'variable_form_element',
-    ),
-  );
-}
-
-/**
- * Implements hook_config_builder_form_builder_properties_alter() on behalf of
- * variable.module.
- */
-function variable_config_builder_form_builder_properties_alter(&$properties, $form_type) {
-  if ('config_builder' == $form_type) {
-    $properties['variable'] = array(
-      'form' => 'config_builder_property_variable_form_element_form',
-    );
-  }
-}
-
-/**
- * Configuration form for the "variable" property.
- */
-function config_builder_property_variable_form_element_form(&$form_state, $form_type, $element, $property) {
-  $form = array();
-
-  $variables = array();
-  $module_info = system_get_info('module');
-  foreach (variable_get_info() as $name => $variable) {
-    if (!isset($variables[$module_info[$variable['module']]['name']])) {
-      $variables[$module_info[$variable['module']]['name']] = array();
-    }
-    $variables[$module_info[$variable['module']]['name']][$name] = $variable['title'];
-  }
-  ksort($variables);
-
-  $form['variable'] = array(
-    '#title' => t('Variable'),
-    '#type' => 'select',
-    '#options' => $variables,
-    '#default_value' => $element['#variable'],
-    '#required' => TRUE,
-  );
-
-  return $form;
 }

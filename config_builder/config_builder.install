@@ -93,6 +93,10 @@ function config_builder_schema() {
       'default_value' => array(
         'type' => 'blob',
       ),
+      'element' => array(
+        'type' => 'blob',
+        'serialize' => TRUE,
+      ),
     ),
   );
 
@@ -123,8 +127,8 @@ function config_builder_update_7100() {
 
 
 /**
- * Add 'type' field to 'config_builder_index' table and update FAPI to use
- * non-eval() approach.
+ * Add 'type' field to 'config_builder_index' table, update FAPI to use
+ * non-eval() approach and add 'element' field to 'config_builder_index' table.
  */
 function config_builder_update_7101() {
   // Add 'type' field to 'config_builder_index' table.
@@ -144,4 +148,7 @@ function config_builder_update_7101() {
       ctools_export_crud_save('config_builder', $config);
     }
   }
+
+  // Add 'access' field to 'config_builder' table.
+  db_add_field('config_builder_index', 'element', array('type' => 'blob', 'serialize' => TRUE));
 }

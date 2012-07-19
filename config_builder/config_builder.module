@@ -58,16 +58,6 @@ function config_builder_module_implements_alter(&$implementations, $hook) {
 }
 
 /**
- * Implements hook_flush_caches().
- */
-function config_builder_flush_caches() {
-  db_delete('form_builder_cache')
-    ->condition('type', 'config_builder')
-    ->execute();
-  form_builder_crud_index_save();
-}
-
-/**
  * CRUD function; Load configuration by name.
  */
 function config_builder_crud_load($name) {
@@ -107,6 +97,7 @@ function config_builder_crud_index_load($id, $config = NULL) {
     ->fetch();
   if (!empty($result)) {
     $result->default_value = unserialize($result->default_value);
+    $result->element = unserialize($result->element);
     return $result;
   }
   return FALSE;
@@ -122,6 +113,7 @@ function config_builder_crud_index_load_all() {
     ->fetchAll();
   foreach ($results as &$result) {
     $result->default_value = unserialize($result->default_value);
+    $result->element = unserialize($result->element);
   }
   return $results;
 }
@@ -163,6 +155,7 @@ function _config_builder_recurse_index(&$form, $config) {
           'type' => $form[$key]['#type'],
           'title' => $form[$key]['#title'],
           'default_value' => serialize(isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : ''),
+          'element' => serialize($form[$key]),
         ))
         ->execute();
     }
@@ -177,6 +170,7 @@ function _config_builder_recurse_index(&$form, $config) {
           'type' => $form[$key]['#type'],
           'title' => $form[$key]['#title'],
           'default_value' => serialize(!is_null($default_value) ? $default_value : array()),
+          'element' => serialize($form[$key]),
         ))
         ->execute();
       $recurse = FALSE;
@@ -228,6 +222,34 @@ function _config_builder_recurse_defaults(&$form) {
       $form[$key]['#default_value'] = variable_get($key, $default);
     }
     _config_builder_recurse_defaults($form[$key]);
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function config_builder_block_info() {
+  $blocks = array();
+
+  foreach (config_builder_crud_load_all() as $config) {
+    $blocks[$config->name] = array(
+      'info' => $config->label,
+    );
+  }
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function config_builder_block_view($delta) {
+  $config = config_builder_crud_load($delta);
+  if ($config !== FALSE && $config->access['type']($config->access[$config->access['type']])) {
+    return array(
+      'subject' => $config->label,
+      'content' => drupal_get_form('config_builder_page_callback', $config),
+    );
   }
 }
 
