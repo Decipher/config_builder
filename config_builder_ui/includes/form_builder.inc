@@ -14,10 +14,7 @@ function _config_builder_form_builder_load_form($config, $form_id) {
     $form = array();
 
     if (!empty($config->name) && isset($config->fapi)) {
-      ob_start();
-      eval($config->fapi);
-      ob_get_clean();
-
+      $form = is_array($config->fapi) ? $config->fapi : array();
       _config_builder_form_builder_prepare_element_recurse($form);
       form_builder_cache_save('config_builder', $form_id, $form);
     }
@@ -40,67 +37,6 @@ function _config_builder_form_builder_prepare_element_recurse(&$form) {
     );
     _config_builder_form_builder_prepare_element_recurse($form[$key]);
   }
-}
-
-/**
- * Recursive function for pretty-printing of FAPI arrays.
- */
-function _config_builder_form_builder_export_recurse($form, $parents = array()) {
-  $output = '';
-
-  // Sort this level of the array according to weight.
-  uasort($form, 'element_sort');
-
-  // Print out this parent element and it's properties.
-  $properties = element_properties($form);
-  $omit = array('#form_builder', '#key');
-  if (count($properties)) {
-    $output .= _config_builder_form_builder_export_variable_name($parents) . " = array(\n";
-    foreach (element_properties($form) as $property) {
-      if (!in_array($property, $omit)) {
-        if (is_array($form[$property])) {
-          $output .= "  '". $property . "' => array(\n";
-          foreach ($form[$property] as $key => $value) {
-            if ($property == '#options') {
-              $output .= "    '" . $key . "' => t('". $value ."'),\n";
-            }
-            else {
-              $output .= "    '" . $key . "' => '". $value ."',\n";
-            }
-          }
-          $output .= "  ),\n";
-        }
-        else {
-          if (($property == '#title') || ($property == '#description')) {
-            $output .= "  '". $property . "' => t('" . str_replace("'", "\'", $form[$property]) ."'),\n";
-          }
-          else {
-            $output .= "  '". $property . "' => '" . $form[$property] ."',\n";
-          }
-        }
-      }
-    }
-    $output .= ");\n";
-  }
-  else {
-    $output .= _config_builder_form_builder_export_variable_name($parents) . " = array();\n";
-  }
-
-  foreach (element_children($form) as $key) {
-    $parents[] = $key;
-    $output .= _config_builder_form_builder_export_recurse($form[$key], $parents);
-    array_pop($parents);
-  }
-
-  return $output;
-}
-
-function _config_builder_form_builder_export_variable_name($parents) {
-  $output = '$form';
-  foreach ($parents as $parent) {
-    $output .= "['". $parent ."']";
-  }
-  return $output;
 }
 
 /**
@@ -253,7 +189,7 @@ function config_builder_form_builder_types() {
 /**
  * Implements hook_form_builder_properties().
  */
-function config_builder_form_builder_properties($form_type) {
+function config_builder_ui_form_builder_properties($form_type) {
   $properties = array();
   if ('config_builder' == $form_type) {
     $properties['tree'] = array(
@@ -267,7 +203,7 @@ function config_builder_form_builder_properties($form_type) {
 /**
  * Configuration form for the "tree" property.
  */
-function config_builder_property_tree_form(&$form_state, $form_type, $element, $property) {
+function config_builder_ui_property_tree_form(&$form_state, $form_type, $element, $property) {
   $form = array();
 
   $form['tree'] = array(

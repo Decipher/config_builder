@@ -14,17 +14,6 @@ foreach (module_list() as $module) {
 }
 
 /**
- * Implements hook_permission().
- */
-function config_builder_permission() {
-  return array(
-    'administer config builder' => array(
-      'title' => t('Administer Configuration builder'),
-    ),
-  );
-}
-
-/**
  * Implements hook_menu().
  */
 function config_builder_menu() {
@@ -150,11 +139,7 @@ function form_builder_crud_index_save($config = NULL) {
       ->execute();
 
     if (empty($config->disabled)) {
-      // Get FAPI elements from configuration.
-      $form = array();
-      ob_start();
-      eval($config->fapi);
-      ob_get_clean();
+      $form = is_array($config->fapi) ? $config->fapi : array();
 
       // Index each item.
       _config_builder_recurse_index($form, $config);
@@ -163,10 +148,13 @@ function form_builder_crud_index_save($config = NULL) {
 }
 
 /**
- * Recursively add default values to form elements.
+ * Recursively index form elements.
  */
 function _config_builder_recurse_index(&$form, $config) {
   foreach (element_children($form) as $key) {
+    $recurse = TRUE;
+
+    // Index standard fields.
     if (!in_array($form[$key]['#type'], array('fieldset')) && isset($form[$key]['#title'])) {
       db_insert('config_builder_index')
         ->fields(array(
@@ -178,17 +166,51 @@ function _config_builder_recurse_index(&$form, $config) {
         ))
         ->execute();
     }
-    _config_builder_recurse_index($form[$key], $config);
+
+    // Index #tree fieldsets.
+    elseif ('fieldset' == $form[$key]['#type'] && isset($form[$key]['#tree']) && $form[$key]['#tree']) {
+      $default_value = _config_builder_recurse_index_tree_value($form[$key]);
+      db_insert('config_builder_index')
+        ->fields(array(
+          'config' => $config->name,
+          'id' => $key,
+          'type' => $form[$key]['#type'],
+          'title' => $form[$key]['#title'],
+          'default_value' => serialize(!is_null($default_value) ? $default_value : array()),
+        ))
+        ->execute();
+      $recurse = FALSE;
+    }
+
+    // Recurse through element children.
+    if (TRUE == $recurse) {
+      _config_builder_recurse_index($form[$key], $config);
+    }
   }
+}
+
+/**
+ * Recusively build default value for #tree fieldset elements.
+ */
+function _config_builder_recurse_index_tree_value(&$form) {
+  $value = array();
+  if (isset($form['#default_value'])) {
+    return $form['#default_value'];
+  }
+  elseif (count(element_children($form)) > 0) {
+    foreach (element_children($form) as $key) {
+      $value[$key] = _config_builder_recurse_index_tree_value($form[$key]);
+    }
+    return $value;
+  }
+  return NULL;
 }
 
 /**
  * Configuration Builder page callback.
  */
 function config_builder_page_callback($form, $form_state, $config) {
-  ob_start();
-  eval($config->fapi);
-  ob_get_clean();
+  $form = is_array($config->fapi) ? $config->fapi : array();
 
   // Set default value on each item.
   _config_builder_recurse_defaults($form);
@@ -240,11 +262,14 @@ function config_builder_token_info() {
     );
 
     foreach ($indexes as $index) {
-      $info['tokens']['config'][$index->id] = array(
-        'name' => $index->title,
-        'description' => t('Value of the "@name" configuration variable.', array('@name' => $index->id)),
-        'type' => 'config-variable',
-      );
+      // @TODO - Provide some sort of array token for #tree fieldsets.
+      if ('fieldset' == $index->type) {
+        $info['tokens']['config'][$index->id] = array(
+          'name' => $index->title,
+          'description' => t('Value of the "@name" configuration variable.', array('@name' => $index->id)),
+          'type' => 'config-variable',
+        );
+      }
     }
   }
 

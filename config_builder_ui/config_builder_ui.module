@@ -1,0 +1,34 @@
+<?php
+/**
+ * @file
+ * Contains administration functions for the Configuration Builder module.
+ */
+
+/**
+ * Include additional files.
+ */
+foreach (module_list() as $module) {
+  if (file_exists($file = dirname(__FILE__) . "/includes/{$module}.inc")) {
+    require_once $file;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function config_builder_ui_permission() {
+  return array(
+    'administer config builder' => array(
+      'title' => t('Administer Configuration builder'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function config_builder_ui_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && !empty($plugin)) {
+    return "plugins/{$plugin}";
+  }
+}

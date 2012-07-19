@@ -1,0 +1,6 @@
+name = Configuration builder UI
+description = Administrative interface to Configuration builder. Without this module, you cannot create or edit your configuration pages.
+dependencies[] = config_builder
+dependencies[] = form_builder
+configure = admin/structure/config_builder
+core = 7.x
