@@ -10,6 +10,7 @@
  */
 function contextual_config_builder_form_config_builder_page_callback_alter(&$form, $form_state) {
   $config = $form_state['build_info']['args'][0];
+  $config = !is_object($config) ? config_builder_crud_load($config) : $config;
   $form['#contextual_links'] = array('config_builder' => array('admin/structure/config_builder/list', array($config->name, 'edit')));
 }
 

@@ -1,6 +1,7 @@
 Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
 --------------------------------------------------------------------------------
 
+- #1692252: Fixed issue with newly created menu callbacks.
 - #1692214 by mstrelan, Deciphered: Fixed flush cache issue with Form Builder.
 - Added '#tree' property for fieldsets.
 - Added initial Variable module integration.

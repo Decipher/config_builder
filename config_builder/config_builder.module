@@ -24,7 +24,7 @@ function config_builder_menu() {
       'title' => $config->label,
       'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('config_builder_page_callback', $config),
+      'page arguments' => array('config_builder_page_callback', $config->name),
       'access callback' => $config->access['type'],
       'access arguments' => array($config->access[$config->access['type']]),
     );
@@ -204,12 +204,16 @@ function _config_builder_recurse_index_tree_value(&$form) {
  * Configuration Builder page callback.
  */
 function config_builder_page_callback($form, $form_state, $config) {
-  $form = is_array($config->fapi) ? $config->fapi : array();
+  $config = !is_object($config) ? config_builder_crud_load($config) : $config;
+  if ($config !== FALSE) {
+    $form = is_array($config->fapi) ? $config->fapi : array();
 
-  // Set default value on each item.
-  _config_builder_recurse_defaults($form);
+    // Set default value on each item.
+    _config_builder_recurse_defaults($form);
 
-  return system_settings_form($form);
+    return system_settings_form($form);
+  }
+  return drupal_not_found();
 }
 
 /**

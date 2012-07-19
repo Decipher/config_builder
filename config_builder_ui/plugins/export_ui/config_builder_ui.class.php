@@ -75,6 +75,23 @@ class config_builder_ui extends ctools_export_ui {
   }
 
   /**
+   * Execute the standard form for editing.
+   *
+   * By default, export UI will provide a single form for editing an object.
+   */
+  function edit_execute_form_standard(&$form_state) {
+    $output = drupal_build_form('ctools_export_ui_edit_item_form', $form_state);
+    if (!empty($form_state['executed'])) {
+      $this->edit_save_form($form_state);
+
+      // Flush all drupal caches.
+      drupal_flush_all_caches();
+    }
+
+    return $output;
+  }
+
+  /**
    * Provide the actual editing form.
    */
   function edit_form(&$form, &$form_state) {

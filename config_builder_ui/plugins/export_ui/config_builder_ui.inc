@@ -211,10 +211,6 @@ function config_builder_ui_export_ui_form_submit(&$form, &$form_state) {
   // Rebuild the Configuration builder index.
   form_builder_crud_index_save((object) $form_state['values']);
 
-  // Flush all caches.
-  variable_set('menu_rebuild_needed', TRUE);
-  drupal_flush_all_caches();
-
   // Access settings.
   foreach ($form_state['values']['access'] as $key => &$value) {
     if (is_array($value)) {

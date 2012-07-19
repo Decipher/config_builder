@@ -44,6 +44,7 @@ Recommended Modules
 --------------------------------------------------------------------------------
 
 * Features - http://drupal.org/project/features
+* Variable - http://drupal.org/project/variable
 
 
 
@@ -53,4 +54,3 @@ Roadmap / Todo
 - Configurable Menus.
 - Exportable as standalone module.
 - Domain integration.
-- Add support for #tree in fieldsets.
