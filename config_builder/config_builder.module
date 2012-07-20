@@ -85,20 +85,37 @@ function config_builder_crud_load_all($disabled = FALSE, $reset = FALSE) {
 /**
  * CRUD function; Load configuration index by id.
  */
-function config_builder_crud_index_load($id, $config = NULL) {
-  $query = db_select('config_builder_index', 'cbi')
-    ->fields('cbi')
-    ->condition('id', $id);
-  if (!is_null($config)) {
-    $query->condition('config', $config);
-  }
-  $result = $query->range(0, 1)
-    ->execute()
-    ->fetch();
-  if (!empty($result)) {
-    $result->default_value = unserialize($result->default_value);
-    $result->element = unserialize($result->element);
-    return $result;
+function config_builder_crud_index_load($id = NULL, $config = NULL) {
+  if (!is_null($id) || !is_null($config)) {
+    $query = db_select('config_builder_index', 'cbi')
+      ->fields('cbi');
+    if (!is_null($id)) {
+      $query->condition('id', $id);
+    }
+    if (!is_null($config)) {
+      $query->condition('config', $config);
+    }
+    if (is_null($id)) {
+      $results = $query->execute()
+        ->fetchAll();
+      if (!empty($results)) {
+        foreach ($results as &$result) {
+          $result->default_value = unserialize($result->default_value);
+          $result->element = unserialize($result->element);
+        }
+        return $results;
+      }
+    }
+    else {
+      $result = $query->range(0, 1)
+        ->execute()
+        ->fetch();
+      if (!empty($result)) {
+        $result->default_value = unserialize($result->default_value);
+        $result->element = unserialize($result->element);
+        return $result;
+      }
+    }
   }
   return FALSE;
 }

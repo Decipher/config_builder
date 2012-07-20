@@ -8,6 +8,7 @@ Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
 - Added UI module.
 - Added Configuration page blocks.
 - Added variable_form_element element.
+- Added Drupal API export mode.
 - Fixed validation errors.
 - Removed all eval() functions.
 

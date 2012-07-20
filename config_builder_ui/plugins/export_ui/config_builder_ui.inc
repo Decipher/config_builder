@@ -226,3 +226,66 @@ function config_builder_ui_export_ui_form_submit(&$form, &$form_state) {
     $_GET['destination'] = isset($_GET['destination']) ? "{$destination}?destination={$_GET['destination']}" : $destination;
   }
 }
+
+/**
+ * Provide a form for displaying an export.
+ */
+function config_builder_export_ui_export_form($form, &$form_state, $item, $title = '') {
+  $form['mode'] = array(
+    '#type' => 'select',
+    '#title' => t('Mode'),
+    '#options' => array(
+      'ctools' => t('CTools exportable'),
+      'drupal' => t('Drupal API')
+    ),
+    '#default_value' => 'ctools',
+    '#ajax' => array(
+      'callback' => 'config_builder_export_ui_export_form_js',
+      'wrapper' => 'export-wrapper',
+    ),
+  );
+
+  $form['export'] = array(
+    '#type' => 'container',
+    '#prefix' => '<div id="export-wrapper">',
+    '#suffix' => '</div>',
+  );
+
+  $mode = isset($form_state['values']['mode']) ? $form_state['values']['mode'] : $form['mode']['#default_value'];
+  switch ($mode) {
+    case 'ctools':
+      $code = ctools_export_crud_export('config_builder', $item);
+      break;
+
+    case 'drupal':
+      $module = isset($form_state['values']['module']) ? $form_state['values']['module'] : t('MYMODULE');
+      $form['export']['module'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Module name'),
+        '#default_value' => $module,
+        '#ajax' => array(
+          'callback' => 'config_builder_export_ui_export_form_js',
+          'wrapper' => 'export-wrapper',
+        ),
+      );
+      $code = theme('config_builder_export', array('item' => $item, 'module' => $module));
+      break;
+  }
+
+  $lines = substr_count($code, "\n");
+  $form['export']['code'] = array(
+    '#type' => 'textarea',
+    '#title' => check_plain($title),
+    '#value' => $code,
+    '#rows' => $lines,
+  );
+
+  return $form;
+}
+
+/**
+ * Ajax callback for Configuration builder export page.
+ */
+function config_builder_export_ui_export_form_js($form, $form_state) {
+  return $form['export'];
+}

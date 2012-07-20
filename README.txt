@@ -22,6 +22,13 @@ Features
   * User permission.
   * User role(s).
 * Provides a block per configuration page.
+* Exportable as:
+  * Drupal API hooks via:
+    * Configuration builder export interface.
+  * CTools exportable via:
+    * Configuration builder export interface.
+    * CTools Bulk Export module.
+    * Features module.
 * Integrates with:
   * Drupal Contextual links module:
     - Adds a hover link for quick editing configuration pages.
@@ -52,5 +59,4 @@ Roadmap / Todo
 --------------------------------------------------------------------------------
 
 - Configurable Menus.
-- Exportable as standalone module.
 - Domain integration.

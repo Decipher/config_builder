@@ -194,4 +194,12 @@ class config_builder_ui extends ctools_export_ui {
       return $this->list_page($js, $input);
     }
   }
+
+  /**
+   * Page callback to display export information for an exportable item.
+   */
+  function export_page($js, $input, $item) {
+    drupal_set_title($this->get_page_title('export', $item));
+    return drupal_get_form('config_builder_export_ui_export_form', $item, t('Export'));
+  }
 }
