@@ -193,7 +193,7 @@ function config_builder_ui_form_builder_properties($form_type) {
   $properties = array();
   if ('config_builder' == $form_type) {
     $properties['tree'] = array(
-      'form' => 'config_builder_property_tree_form',
+      'form' => 'config_builder_ui_property_tree_form',
     );
   }
   drupal_alter('config_builder_form_builder_properties', $properties, $form_type);

@@ -1,4 +1,4 @@
-Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
+Configuration builder 7.x-1.0, 2012-07-31
 --------------------------------------------------------------------------------
 
 - #1692252: Fixed issue with newly created menu callbacks.

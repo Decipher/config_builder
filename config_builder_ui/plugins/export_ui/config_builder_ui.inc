@@ -254,10 +254,12 @@ function config_builder_export_ui_export_form($form, &$form_state, $item, $title
   $mode = isset($form_state['values']['mode']) ? $form_state['values']['mode'] : $form['mode']['#default_value'];
   switch ($mode) {
     case 'ctools':
+      ctools_include('export');
       $code = ctools_export_crud_export('config_builder', $item);
       break;
 
     case 'drupal':
+      module_load_include('inc', 'config_builder', 'includes/variable');
       $module = isset($form_state['values']['module']) ? $form_state['values']['module'] : t('MYMODULE');
       $form['export']['module'] = array(
         '#type' => 'textfield',

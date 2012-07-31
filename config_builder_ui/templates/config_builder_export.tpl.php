@@ -97,7 +97,7 @@ function <?php echo $module ?>_variable_group_info() {
     'description' => '<?php echo str_replace("'", "\'", $item->description) ?>',
     'path' => '<?php echo $item->path ?>',
 <?php if ($access['type'] == 'user_access') : ?>
-    'access' => '<?php echo $access['user_access'] ?>',
+    'access' => <?php echo $access['user_access'] ?>,
 <?php endif ?>
   );
 

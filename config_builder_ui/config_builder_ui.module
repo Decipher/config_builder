@@ -125,14 +125,17 @@ function _config_builder_ui_recurse_export_default_value(&$form) {
 
     // Standard fields.
     if (!in_array($form[$key]['#type'], array('fieldset')) && isset($form[$key]['#title'])) {
-      $form[$key]['#default_value'] = "variable_get('{$key}', '{$form[$key]['#default_value']}'),";
+      $form[$key]['#default_value'] = is_array($form[$key]['#default_value'])
+        ? "array('" . implode("', '", array_values($form[$key]['#default_value'])) . "')"
+        : $form[$key]['#default_value'] = "'{$form[$key]['#default_value']}'";
+      $form[$key]['#default_value'] = "variable_get('{$key}', {$form[$key]['#default_value']}),";
     }
 
     // Index #tree fieldsets.
-    // elseif ('fieldset' == $form[$key]['#type'] && isset($form[$key]['#tree']) && $form[$key]['#tree']) {
-
-    //   $recurse = FALSE;
-    // }
+    // @TODO - Add default values for children of fieldset.
+    elseif ('fieldset' == $form[$key]['#type'] && isset($form[$key]['#tree']) && $form[$key]['#tree']) {
+      $recurse = FALSE;
+    }
 
     // Recurse through element children.
     if (TRUE == $recurse) {
