@@ -153,15 +153,7 @@ class config_builder_ui extends ctools_export_ui {
       $form['buttons']['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Save'),
-        '#limit_validation_errors' => array(
-          array('access'),
-          array('description'),
-          array('form_builder_id'),
-          array('form_builder_positions'),
-          array('label'),
-          array('name'),
-          array('path'),
-        ),
+        '#limit_validation_errors' => _config_builder_ui_limit_validation_errors(),
         '#submit' => array('ctools_export_ui_edit_item_form_submit'),
       );
 
@@ -169,7 +161,8 @@ class config_builder_ui extends ctools_export_ui {
         '#type' => 'submit',
         '#value' => $item->export_type & EXPORT_IN_CODE ? t('Revert') : t('Delete'),
         '#access' => $form_state['op'] === 'edit' && $item->export_type & EXPORT_IN_DATABASE,
-        '#submit' => array('ctools_export_ui_edit_item_form_delete'),
+        '#limit_validation_errors' => _config_builder_ui_limit_validation_errors(),
+        '#submit' => array('config_builder_ui_export_ui_form_delete'),
       );
     }
   }

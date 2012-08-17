@@ -170,16 +170,23 @@ function config_builder_ui_export_ui_form(&$form, &$form_state) {
   $form['buttons']['edit'] = array(
     '#type' => 'submit',
     '#value' => t('Save & Edit'),
-    '#limit_validation_errors' => array(
-      array('access'),
-      array('description'),
-      array('form_builder_id'),
-      array('form_builder_positions'),
-      array('label'),
-      array('name'),
-      array('path'),
-    ),
+    '#limit_validation_errors' => _config_builder_ui_limit_validation_errors(),
     '#submit' => array('ctools_export_ui_edit_item_form_submit'),
+  );
+}
+
+/**
+ * Helper function; Return array for #limit_validation_errors.
+ */
+function _config_builder_ui_limit_validation_errors() {
+  return array(
+    array('access'),
+    array('description'),
+    array('form_builder_id'),
+    array('form_builder_positions'),
+    array('label'),
+    array('name'),
+    array('path'),
   );
 }
 
