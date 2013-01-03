@@ -20,14 +20,51 @@ function config_builder_menu() {
   $items = array();
 
   foreach (config_builder_crud_load_all(FALSE, TRUE) as $config) {
-    $items[$config->path] = array(
-      'title' => $config->label,
-      'type' => MENU_NORMAL_ITEM,
+    $item = array(
       'page callback' => 'drupal_get_form',
       'page arguments' => array('config_builder_page_callback', $config->name),
       'access callback' => $config->access['type'],
       'access arguments' => array($config->access[$config->access['type']]),
     );
+
+    if (isset($config->menu['title'])) {
+      $item['title'] = $config->menu['title'];
+    }
+
+    if (isset($config->menu['weight'])) {
+      $item['weight'] = $config->menu['weight'];
+    }
+
+    if (empty($config->menu['type'])) {
+      $config->menu['type'] = 'none';
+    }
+
+    switch ($config->menu['type']) {
+      case 'none':
+      default:
+        $item['type'] = MENU_CALLBACK;
+        break;
+
+      case 'normal':
+        $item['type'] = MENU_NORMAL_ITEM;
+        // Insert item into the proper menu
+        $item['menu_name'] = $config->menu['name'];
+        break;
+
+      case 'tab':
+        $item['type'] = MENU_LOCAL_TASK;
+        break;
+
+      case 'action':
+        $item['type'] = MENU_LOCAL_ACTION;
+        break;
+
+      case 'default tab':
+        $item['type'] = MENU_DEFAULT_LOCAL_TASK;
+        break;
+    }
+
+    $items[$config->path] = $item;
   }
 
   return $items;

@@ -66,12 +66,19 @@ function config_builder_ui_export_ui_form(&$form, &$form_state) {
     '#required' => TRUE,
   );
 
+  // Veritcal tabs.
+  $form['page']['settings'] = array(
+    '#type' => 'vertical_tabs',
+  );
+
+  // Access settings.
   $form['page']['access'] = array(
     '#type' => 'fieldset',
     '#title' => t('Access'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
     '#tree' => TRUE,
+    '#group' => 'settings',
   );
 
   $form['page']['access']['type'] = array(
@@ -82,6 +89,137 @@ function config_builder_ui_export_ui_form(&$form, &$form_state) {
       'config_builder_role_access' => t('Role'),
     ),
     '#default_value' => isset($item->access['type']) ? $item->access['type'] : NULL,
+  );
+
+  // Menu settings.
+  $form['page']['menu'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Menu'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#group' => 'settings',
+  );
+
+  $form['page']['menu']['type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Type'),
+    '#options' => array(
+      'none' => t('No menu entry'),
+      'normal' => t('Normal menu entry'),
+      'tab' => t('Menu tab'),
+      'default tab' => t('Default menu tab'),
+      'action' => t('Local action'),
+    ),
+    '#default_value' => isset($item->menu['type']) ? $item->menu['type'] : 'none',
+  );
+
+  $form['page']['menu']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#default_value' => isset($item->menu['title']) ? $item->menu['title'] : NULL,
+    '#description' => t('If set to normal or tab, enter the text to use for the menu item.'),
+    '#size' => 60,
+    '#maxsize' => 128,
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="menu[type]"]' => array('value' => 'none'),
+      ),
+    ),
+  );
+
+  $form['page']['menu']['menu'] = array(
+    '#type' => 'select',
+    '#title' => t('Menu'),
+    '#options' => menu_get_menus(),
+    '#default_value' => isset($item->menu['menu']) ? $item->menu['menu'] : NULL,
+    '#description' => t('Insert item into an available menu.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="menu[type]"]' => array('value' => 'normal'),
+      ),
+    ),
+  );
+
+  $form['page']['menu']['weight'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Weight'),
+    '#default_value' => isset($item->menu['weight']) ? $item->menu['weight'] : 0,
+    '#description' => t('The lower the weight the higher/further left it will appear.'),
+    '#size' => 60,
+    '#maxsize' => 128,
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="menu[type]"]' => array('value' => 'none'),
+      ),
+    ),
+  );
+
+  $form['page']['menu']['parent'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="menu[type]"]' => array('value' => 'default tab'),
+      ),
+    ),
+  );
+
+  $form['page']['menu']['parent']['type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Parent menu item'),
+    '#options' => array(
+      'none' => t('No menu entry'),
+      'normal' => t('Normal menu item'),
+      'tab' => t('Menu tab'),
+    ),
+    '#default_value' => isset($item->menu['parent']['type']) ? $item->menu['parent']['type'] : 'none',
+    '#description' => t('When providing a menu item as a default tab, Drupal needs to know what the parent menu item of that tab will be. Sometimes the parent will already exist, but other times you will need to have one created. The path of a parent item will always be the same path with the last part left off. i.e, if the path to this view is <em>foo/bar/baz</em>, the parent path would be <em>foo/bar</em>.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="menu[type]"]' => array('value' => 'default tab'),
+      ),
+    ),
+  );
+
+  $form['page']['menu']['parent']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Parent item title'),
+    '#default_value' => isset($item->menu['parent']['title']) ? $item->menu['parent']['title'] : NULL,
+    '#description' => t('If creating a parent menu item, enter the title of the item.'),
+    '#size' => 60,
+    '#maxsize' => 128,
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="menu[parent][type]"]' => array('value' => 'none'),
+      ),
+    ),
+  );
+
+  $form['page']['menu']['parent']['menu'] = array(
+    '#type' => 'select',
+    '#title' => t('Parent item menu'),
+    '#options' => menu_get_menus(),
+    '#default_value' => isset($item->menu['parent']['menu']) ? $item->menu['parent']['menu'] : NULL,
+    '#description' => t('Insert item into an available menu.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="menu[parent][type]"]' => array('value' => 'normal'),
+      ),
+    ),
+  );
+
+  $form['page']['menu']['parent']['weight'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tab weight'),
+    '#default_value' => isset($item->menu['parent']['weight']) ? $item->menu['parent']['weight'] : 0,
+    '#description' => t('If the parent menu item is a tab, enter the weight of the tab. The lower the number, the more to the left it will be.'),
+    '#size' => 5,
+    '#maxsize' => 128,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="menu[parent][type]"]' => array('value' => 'tab'),
+      ),
+    ),
   );
 
   // Get list of permissions.
@@ -185,6 +323,7 @@ function _config_builder_ui_limit_validation_errors() {
     array('form_builder_id'),
     array('form_builder_positions'),
     array('label'),
+    array('menu'),
     array('name'),
     array('path'),
   );

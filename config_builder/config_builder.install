@@ -56,6 +56,13 @@ function config_builder_schema() {
         'default' => '',
         'serialize' => TRUE,
       ),
+      'menu' => array(
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+        'default' => '',
+        'serialize' => TRUE,
+      ),
       'fapi' => array(
         'type' => 'blob',
         'serialize' => TRUE,
@@ -125,7 +132,6 @@ function config_builder_update_7100() {
   db_drop_field('config_builder_index', 'description');
 }
 
-
 /**
  * Add 'type' field to 'config_builder_index' table, update FAPI to use
  * non-eval() approach and add 'element' field to 'config_builder_index' table.
@@ -152,3 +158,12 @@ function config_builder_update_7101() {
   // Add 'access' field to 'config_builder' table.
   db_add_field('config_builder_index', 'element', array('type' => 'blob', 'serialize' => TRUE));
 }
+
+/**
+ * Add 'menu' field to 'config_builder' table.
+ */
+function config_builder_update_7102() {
+  // Add 'menu' field to 'config_builder' table.
+  db_add_field('config_builder', 'menu', array('type' => 'varchar', 'length' => 512, 'not null' => TRUE, 'default' => '', 'serialize' => TRUE));
+}
+
