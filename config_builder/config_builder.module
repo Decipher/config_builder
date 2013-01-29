@@ -273,13 +273,21 @@ function config_builder_page_callback($form, $form_state, $config) {
 /**
  * Recursively add default values to form elements.
  */
-function _config_builder_recurse_defaults(&$form) {
+function _config_builder_recurse_defaults(&$form, $settings = NULL) {
   foreach (element_children($form) as $key) {
     if (!in_array($form[$key]['#type'], array('fieldset'))) {
       $default = isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : NULL;
       $form[$key]['#default_value'] = variable_get($key, $default);
+      if (!is_null($settings)) {
+        $form[$key]['#default_value'] = $settings[$key];
+      }
     }
-    _config_builder_recurse_defaults($form[$key]);
+    elseif ($form[$key]['#tree'] && !isset($settings[$key])) {
+      $settings[$key] = variable_get($key, array());
+      $parent = NULL;
+    }
+    $settings[$key] = isset($settings[$key]) ? $settings[$key] : NULL;
+    _config_builder_recurse_defaults($form[$key], $settings[$key]);
   }
 }
 
