@@ -24,11 +24,12 @@ function config_builder_setup_info() {
 function config_builder_setup_config_builder_form_callback($form, &$form_state) {
   if (isset($form_state['setup_step']['name'])) {
     $config = config_builder_crud_load($form_state['setup_step']['name']);
+    if ($config) {
+      // Set default value on each item.
+      _config_builder_recurse_defaults($config->fapi);
 
-    // Set default value on each item.
-    _config_builder_recurse_defaults($config->fapi);
-
-    $form += $config->fapi;
+      $form += $config->fapi;
+    }
   }
 
   return $form;

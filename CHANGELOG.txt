@@ -2,7 +2,9 @@ Configuration builder 7.x-1.x-dev, xxxx-xx-xx (development release)
 --------------------------------------------------------------------------------
 
 - Added Setup module integration.
+- Added Tokens in Variable integration.
 - Fixed issues with reverting a configuration page.
+- Fixed issue with Token support during installation.
 
 
 

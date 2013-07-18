@@ -53,6 +53,7 @@ function config_builder_variable_info_alter(&$variables, $options) {
         'default' => isset($index->default_value) ? $index->default_value : NULL,
         'group' => $index->config,
         'module' => 'config_builder',
+        'token' => TRUE,
       );
       switch ($index->type) {
         case 'checkboxes':

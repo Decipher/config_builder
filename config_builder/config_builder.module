@@ -383,6 +383,9 @@ function config_builder_tokens($type, $tokens, array $data = array(), array $opt
         else {
           if (is_null($variable_data)) {
             $index = config_builder_crud_index_load($token[0]);
+            if (!is_object($index)) {
+              return FALSE;
+            }
             $variable_data = $index->default_value;
           }
           $replacements[$original] = $variable_data;
@@ -398,6 +401,9 @@ function config_builder_tokens($type, $tokens, array $data = array(), array $opt
           case 'default':
             if (is_null($variable_data) && isset($token[2])) {
               $index = config_builder_crud_index_load($token[0], $token[2]);
+              if (!is_object($index)) {
+                return FALSE;
+              }
               $variable_data = $index->default_value;
             }
             $replacements[$original] = $variable_data;
