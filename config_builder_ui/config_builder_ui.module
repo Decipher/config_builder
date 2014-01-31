@@ -51,16 +51,6 @@ function config_builder_ui_permission() {
 }
 
 /**
- * Implements hook_flush_caches().
- */
-function config_builder_flush_caches() {
-//  db_delete('form_builder_cache')
-//    ->condition('type', 'config_builder')
-//    ->execute();
-  form_builder_crud_index_save();
-}
-
-/**
  * Implements hook_ctools_plugin_directory().
  */
 function config_builder_ui_ctools_plugin_directory($module, $plugin) {

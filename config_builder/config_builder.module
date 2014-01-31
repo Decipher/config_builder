@@ -71,6 +71,16 @@ function config_builder_menu() {
 }
 
 /**
+ * Implements hook_flush_caches().
+ */
+function config_builder_flush_caches() {
+//  db_delete('form_builder_cache')
+//    ->condition('type', 'config_builder')
+//    ->execute();
+  form_builder_crud_index_save();
+}
+
+/**
  * Access callback for user roles.
  */
 function config_builder_role_access($roles) {
