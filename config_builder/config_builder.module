@@ -48,7 +48,7 @@ function config_builder_menu() {
       case 'normal':
         $item['type'] = MENU_NORMAL_ITEM;
         // Insert item into the proper menu
-        $item['menu_name'] = $config->menu['name'];
+        $item['menu_name'] = $config->menu['title'];
         break;
 
       case 'tab':

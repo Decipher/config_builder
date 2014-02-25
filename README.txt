@@ -55,6 +55,27 @@ Recommended Modules
 
 
 
+Makefile entries
+--------------------------------------------------------------------------------
+
+For easy downloading of Configuration Builder and it's required/recommended
+modules and/or libraries, you can use the following entries in your makefile:
+
+
+  projects[ctools][subdir] = contrib
+  projects[ctools][version] = 1.4
+
+  projects[form_builder][subdir] = contrib
+  projects[form_builder][version] = 1.4
+
+  projects[options_element][subdir] = contrib
+  projects[options_element][version] = 1.10
+
+  projects[variable][subdir] = contrib
+  projects[variable][version] = 2.4
+
+
+
 Roadmap / Todo
 --------------------------------------------------------------------------------
 
