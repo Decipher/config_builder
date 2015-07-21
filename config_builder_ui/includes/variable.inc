@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Variable module integration.
@@ -7,16 +8,18 @@
 /**
  * Implements hook_config_builder_form_builder_types_alter() on behalf of
  * variable.module.
+ *
+ * @param $fields
  */
 function variable_config_builder_form_builder_types_alter(&$fields) {
-  $variables = _config_builder_variables_options_list();
+  $variables                       = _config_builder_variables_options_list();
   $fields['variable_form_element'] = array(
-    'title' => t('Variable'),
+    'title'      => t('Variable'),
     'properties' => array(
       'variable',
     ),
-    'default' => array(
-      '#type' => 'variable_form_element',
+    'default'    => array(
+      '#type'     => 'variable_form_element',
       '#variable' => key($variables[key($variables)]),
     ),
   );
@@ -25,6 +28,9 @@ function variable_config_builder_form_builder_types_alter(&$fields) {
 /**
  * Implements hook_config_builder_form_builder_properties_alter() on behalf of
  * variable.module.
+ *
+ * @param $properties
+ * @param $form_type
  */
 function variable_config_builder_form_builder_properties_alter(&$properties, $form_type) {
   if ('config_builder' == $form_type) {
@@ -36,26 +42,32 @@ function variable_config_builder_form_builder_properties_alter(&$properties, $fo
 
 /**
  * Configuration form for the "variable" property.
+ *
+ * @param $form_state
+ * @param $form_type
+ * @param $element
+ *
+ * @return array
  */
-function config_builder_property_variable_form_element_form(&$form_state, $form_type, $element, $property) {
+function config_builder_property_variable_form_element_form(&$form_state, $form_type, $element) {
   $form = array();
 
   $form['variable'] = array(
-    '#title' => t('Variable'),
-    '#type' => 'select',
-    '#options' => _config_builder_variables_options_list(),
+    '#title'         => t('Variable'),
+    '#type'          => 'select',
+    '#options'       => _config_builder_variables_options_list(),
     '#default_value' => $element['#variable'],
-    '#required' => TRUE,
+    '#required'      => TRUE,
   );
 
   return $form;
 }
 
 /**
- * Helper functon; Build variables options list.
+ * Helper function; Build variables options list.
  */
 function _config_builder_variables_options_list() {
-  $variables = &drupal_static(__FUNCTION__, array());
+  $variables   = &drupal_static(__FUNCTION__, array());
   $module_info = system_get_info('module');
   foreach (variable_get_info() as $name => $variable) {
     if (!isset($variables[$module_info[$variable['module']]['name']])) {
@@ -64,8 +76,8 @@ function _config_builder_variables_options_list() {
     $variables[$module_info[$variable['module']]['name']][$name] = $variable['title'];
     if (isset($variable['multiple'])) {
       $variable = variable_build($variable);
-      foreach ($variable['children'] as $name => $child) {
-        $variables[$module_info[$variable['module']]['name']][$name] = "{$variable['title']} [{$child['title']}]";
+      foreach ($variable['children'] as $sub_name => $child) {
+        $variables[$module_info[$variable['module']]['name']][$sub_name] = "{$variable['title']} [{$child['title']}]";
       }
     }
   }
@@ -73,5 +85,6 @@ function _config_builder_variables_options_list() {
   foreach ($variables as &$group) {
     ksort($group);
   }
+
   return $variables;
 }

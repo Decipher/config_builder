@@ -1,8 +1,8 @@
 <?php
+
 /**
  * @file
  */
-
 class config_builder_ui extends ctools_export_ui {
   /**
    * Build a row based on the item.
@@ -10,10 +10,16 @@ class config_builder_ui extends ctools_export_ui {
    * By default all of the rows are placed into a table by the render
    * method, so this is building up a row suitable for theme('table').
    * This doesn't have to be true if you override both.
+   *
+   * @param $item
+   * @param $form_state
+   * @param $operations
+   *
+   * @throws Exception
    */
   function list_build_row($item, &$form_state, $operations) {
     // Set up sorting
-    $name = $item->{$this->plugin['export']['key']};
+    $name   = $item->{$this->plugin['export']['key']};
     $schema = ctools_export_get_schema($this->plugin['schema']);
 
     // Note: $item->{$schema['export']['export type string']} should have already been set up by export.inc so
@@ -33,20 +39,43 @@ class config_builder_ui extends ctools_export_ui {
         break;
     }
 
-    $this->rows[$name]['data'] = array();
+    $this->rows[$name]['data']  = array();
     $this->rows[$name]['class'] = !empty($item->disabled) ? array('ctools-export-ui-disabled') : array('ctools-export-ui-enabled');
 
     // If we have an admin title, make it the first row.
     if (!empty($this->plugin['export']['admin_title'])) {
-      $this->rows[$name]['data'][] = array('data' => check_plain($item->{$this->plugin['export']['admin_title']}), 'class' => array('ctools-export-ui-title'));
+      $this->rows[$name]['data'][] = array(
+        'data'  => check_plain($item->{$this->plugin['export']['admin_title']}),
+        'class' => array('ctools-export-ui-title')
+      );
     }
-    $this->rows[$name]['data'][] = array('data' => check_plain($name), 'class' => array('ctools-export-ui-name'));
-    $this->rows[$name]['data'][] = array('data' => l(base_path() . $item->path, $item->path), 'class' => array('ctools-export-ui-path'));
-    $this->rows[$name]['data'][] = array('data' => check_plain($item->{$schema['export']['export type string']}), 'class' => array('ctools-export-ui-storage'));
+    $this->rows[$name]['data'][] = array(
+      'data'  => check_plain($name),
+      'class' => array('ctools-export-ui-name')
+    );
+    $this->rows[$name]['data'][] = array(
+      'data'  => l(base_path() . $item->path, $item->path),
+      'class' => array('ctools-export-ui-path')
+    );
+    $this->rows[$name]['data'][] = array(
+      'data'  => check_plain($item->{$schema['export']['export type string']}),
+      'class' => array('ctools-export-ui-storage')
+    );
 
-    $ops = theme('links__ctools_dropbutton', array('links' => $operations, 'attributes' => array('class' => array('links', 'inline'))));
+    $ops = theme('links__ctools_dropbutton', array(
+      'links'      => $operations,
+      'attributes' => array(
+        'class' => array(
+          'links',
+          'inline'
+        )
+      )
+    ));
 
-    $this->rows[$name]['data'][] = array('data' => $ops, 'class' => array('ctools-export-ui-operations'));
+    $this->rows[$name]['data'][] = array(
+      'data'  => $ops,
+      'class' => array('ctools-export-ui-operations')
+    );
 
     // Add an automatic mouseover of the description if one exists.
     if (!empty($this->plugin['export']['admin_description'])) {
@@ -63,13 +92,28 @@ class config_builder_ui extends ctools_export_ui {
   function list_table_header() {
     $header = array();
     if (!empty($this->plugin['export']['admin_title'])) {
-      $header[] = array('data' => t('Title'), 'class' => array('ctools-export-ui-title'));
+      $header[] = array(
+        'data'  => t('Title'),
+        'class' => array('ctools-export-ui-title')
+      );
     }
 
-    $header[] = array('data' => t('Name'), 'class' => array('ctools-export-ui-name'));
-    $header[] = array('data' => t('Path'), 'class' => array('ctools-export-ui-path'));
-    $header[] = array('data' => t('Storage'), 'class' => array('ctools-export-ui-storage'));
-    $header[] = array('data' => t('Operations'), 'class' => array('ctools-export-ui-operations'));
+    $header[] = array(
+      'data'  => t('Name'),
+      'class' => array('ctools-export-ui-name')
+    );
+    $header[] = array(
+      'data'  => t('Path'),
+      'class' => array('ctools-export-ui-path')
+    );
+    $header[] = array(
+      'data'  => t('Storage'),
+      'class' => array('ctools-export-ui-storage')
+    );
+    $header[] = array(
+      'data'  => t('Operations'),
+      'class' => array('ctools-export-ui-operations')
+    );
 
     return $header;
   }
@@ -78,6 +122,10 @@ class config_builder_ui extends ctools_export_ui {
    * Execute the standard form for editing.
    *
    * By default, export UI will provide a single form for editing an object.
+   *
+   * @param $form_state
+   *
+   * @return array|mixed
    */
   function edit_execute_form_standard(&$form_state) {
     $output = drupal_build_form('ctools_export_ui_edit_item_form', $form_state);
@@ -93,32 +141,35 @@ class config_builder_ui extends ctools_export_ui {
 
   /**
    * Provide the actual editing form.
+   *
+   * @param $form
+   * @param $form_state
    */
   function edit_form(&$form, &$form_state) {
     $export_key = $this->plugin['export']['key'];
-    $item = $form_state['item'];
-    $schema = ctools_export_get_schema($this->plugin['schema']);
+    $item       = $form_state['item'];
+    $schema     = ctools_export_get_schema($this->plugin['schema']);
 
     if (!empty($this->plugin['export']['admin_title'])) {
       $form['info'][$this->plugin['export']['admin_title']] = array(
-        '#type' => 'textfield',
-        '#title' => t('Administrative title'),
-        '#description' => t('This will appear in the administrative interface to easily identify it.'),
+        '#type'          => 'textfield',
+        '#title'         => t('Administrative title'),
+        '#description'   => t('This will appear in the administrative interface to easily identify it.'),
         '#default_value' => $item->{$this->plugin['export']['admin_title']},
       );
     }
 
     $form['info'][$export_key] = array(
-      '#title' => t($schema['export']['key name']),
-      '#type' => 'textfield',
+      '#title'         => t($schema['export']['key name']),
+      '#type'          => 'textfield',
       '#default_value' => $item->{$export_key},
-      '#description' => t('The unique ID for this @export.', array('@export' => $this->plugin['title singular'])),
-      '#required' => TRUE,
-      '#maxlength' => 255,
+      '#description'   => t('The unique ID for this @export.', array('@export' => $this->plugin['title singular'])),
+      '#required'      => TRUE,
+      '#maxlength'     => 255,
     );
 
     if (!empty($this->plugin['export']['admin_title'])) {
-      $form['info'][$export_key]['#type'] = 'machine_name';
+      $form['info'][$export_key]['#type']         = 'machine_name';
       $form['info'][$export_key]['#machine_name'] = array(
         'exists' => 'ctools_export_ui_edit_name_exists',
         'source' => array('info', $this->plugin['export']['admin_title']),
@@ -127,13 +178,13 @@ class config_builder_ui extends ctools_export_ui {
 
     if ($form_state['op'] === 'edit') {
       $form['info'][$export_key]['#disabled'] = TRUE;
-      $form['info'][$export_key]['#value'] = $item->{$export_key};
+      $form['info'][$export_key]['#value']    = $item->{$export_key};
     }
 
     if (!empty($this->plugin['export']['admin_description'])) {
       $form['info'][$this->plugin['export']['admin_description']] = array(
-        '#type' => 'textarea',
-        '#title' => t('Administrative description'),
+        '#type'          => 'textarea',
+        '#title'         => t('Administrative description'),
         '#default_value' => $item->{$this->plugin['export']['admin_description']},
       );
     }
@@ -151,18 +202,18 @@ class config_builder_ui extends ctools_export_ui {
 
       // Add buttons.
       $form['buttons']['submit'] = array(
-        '#type' => 'submit',
-        '#value' => t('Save'),
+        '#type'                    => 'submit',
+        '#value'                   => t('Save'),
         '#limit_validation_errors' => _config_builder_ui_limit_validation_errors(),
-        '#submit' => array('ctools_export_ui_edit_item_form_submit'),
+        '#submit'                  => array('ctools_export_ui_edit_item_form_submit'),
       );
 
       $form['buttons']['delete'] = array(
-        '#type' => 'submit',
-        '#value' => $item->export_type & EXPORT_IN_CODE ? t('Revert') : t('Delete'),
-        '#access' => $form_state['op'] === 'edit' && $item->export_type & EXPORT_IN_DATABASE,
+        '#type'                    => 'submit',
+        '#value'                   => $item->export_type & EXPORT_IN_CODE ? t('Revert') : t('Delete'),
+        '#access'                  => $form_state['op'] === 'edit' && $item->export_type & EXPORT_IN_DATABASE,
         '#limit_validation_errors' => _config_builder_ui_limit_validation_errors(),
-        '#submit' => array('config_builder_ui_export_ui_form_delete'),
+        '#submit'                  => array('config_builder_ui_export_ui_form_delete'),
       );
     }
   }
@@ -172,6 +223,13 @@ class config_builder_ui extends ctools_export_ui {
    *
    * If javascript is in use, this will rebuild the list and send that back
    * as though the filter form had been executed.
+   *
+   * @param $state
+   * @param $js
+   * @param $input
+   * @param $item
+   *
+   * @return string
    */
   function set_item_state($state, $js, $input, $item) {
     ctools_export_crud_set_status($this->plugin['schema'], $item, $state);
@@ -190,9 +248,16 @@ class config_builder_ui extends ctools_export_ui {
 
   /**
    * Page callback to display export information for an exportable item.
+   *
+   * @param $js
+   * @param $input
+   * @param $item
+   *
+   * @return array|mixed
    */
   function export_page($js, $input, $item) {
     drupal_set_title($this->get_page_title('export', $item));
+
     return drupal_get_form('config_builder_export_ui_export_form', $item, t('Export'));
   }
 }

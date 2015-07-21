@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Form Builder module integration.
@@ -6,6 +7,11 @@
 
 /**
  * Load Form Builder form.
+ *
+ * @param $config
+ * @param $form_id
+ *
+ * @return mixed
  */
 function _config_builder_form_builder_load_form($config, $form_id) {
   $loader = FormBuilderLoader::instance();
@@ -28,15 +34,17 @@ function _config_builder_form_builder_load_form($config, $form_id) {
 
 /**
  * Recursively prepare form builder element.
+ *
+ * @param $form
  */
 function _config_builder_form_builder_prepare_element_recurse(&$form) {
   foreach (element_children($form) as $key) {
-    $form[$key]['#key'] = $key;
+    $form[$key]['#key']          = $key;
     $form[$key]['#form_builder'] = array(
-      'element_id' => $key,
+      'element_id'   => $key,
       'element_type' => $form[$key]['#type'],
       'configurable' => TRUE,
-      'removable' => TRUE,
+      'removable'    => TRUE,
     );
     _config_builder_form_builder_prepare_element_recurse($form[$key]);
   }
@@ -49,7 +57,7 @@ function config_builder_form_builder_types() {
   $fields = array();
 
   $fields['fieldset'] = array(
-    'title' => t('Fieldset'),
+    'title'      => t('Fieldset'),
     'properties' => array(
       'title',
       'description',
@@ -58,16 +66,16 @@ function config_builder_form_builder_types() {
       'key',
       'tree',
     ),
-    'default' => array(
-      '#title' => t('New fieldset'),
-      '#type' => 'fieldset',
+    'default'    => array(
+      '#title'       => t('New fieldset'),
+      '#type'        => 'fieldset',
       '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
+      '#collapsed'   => FALSE,
     ),
   );
 
   $fields['select'] = array(
-    'title' => t('Select list'),
+    'title'      => t('Select list'),
     'properties' => array(
       'title',
       'description',
@@ -80,21 +88,21 @@ function config_builder_form_builder_types() {
       'key_type_toggled', // Handled by options element.
       'key',
     ),
-    'default' => array(
-      '#title' => t('New select list'),
-      '#type' => 'select',
-      '#options' => array(
+    'default'    => array(
+      '#title'           => t('New select list'),
+      '#type'            => 'select',
+      '#options'         => array(
         '1' => 'one',
         '2' => 'two',
         '3' => 'three'
       ),
-      '#default_value' => array(),
+      '#default_value'   => array(),
       '#multiple_toggle' => TRUE,
     ),
   );
 
   $fields['checkboxes'] = array(
-    'title' => t('Checkboxes'),
+    'title'      => t('Checkboxes'),
     'properties' => array(
       'title',
       'description',
@@ -107,12 +115,12 @@ function config_builder_form_builder_types() {
       'key_type_toggled', // Handled by options element.
       'key',
     ),
-    'default' => array(
-      '#title' => t('New checkboxes'),
-      '#type' => 'checkboxes',
-      '#options' => array(
-        'one' => 'one',
-        'two' => 'two',
+    'default'    => array(
+      '#title'         => t('New checkboxes'),
+      '#type'          => 'checkboxes',
+      '#options'       => array(
+        'one'   => 'one',
+        'two'   => 'two',
         'three' => 'three'
       ),
       '#default_value' => array(),
@@ -120,7 +128,7 @@ function config_builder_form_builder_types() {
   );
 
   $fields['radios'] = array(
-    'title' => t('Radios'),
+    'title'      => t('Radios'),
     'properties' => array(
       'title',
       'description',
@@ -132,12 +140,12 @@ function config_builder_form_builder_types() {
       'key_type_toggled', // Handled by options element.
       'key',
     ),
-    'default' => array(
-      '#title' => t('New radios'),
-      '#type' => 'radios',
-      '#options' => array(
-        'one' => 'one',
-        'two' => 'two',
+    'default'    => array(
+      '#title'         => t('New radios'),
+      '#type'          => 'radios',
+      '#options'       => array(
+        'one'   => 'one',
+        'two'   => 'two',
         'three' => 'three'
       ),
       '#default_value' => array(),
@@ -145,7 +153,7 @@ function config_builder_form_builder_types() {
   );
 
   $fields['textfield'] = array(
-    'title' => t('Textfield'),
+    'title'      => t('Textfield'),
     'properties' => array(
       'title',
       'description',
@@ -156,15 +164,15 @@ function config_builder_form_builder_types() {
       'size',
       'key',
     ),
-    'default' => array(
-      '#title' => t('New textfield'),
-      '#type' => 'textfield',
+    'default'    => array(
+      '#title'         => t('New textfield'),
+      '#type'          => 'textfield',
       '#default_value' => '',
     ),
   );
 
   $fields['textarea'] = array(
-    'title' => t('Textarea'),
+    'title'      => t('Textarea'),
     'properties' => array(
       'title',
       'description',
@@ -174,9 +182,9 @@ function config_builder_form_builder_types() {
       'cols',
       'key',
     ),
-    'default' => array(
-      '#title' => t('New textarea'),
-      '#type' => 'textarea',
+    'default'    => array(
+      '#title'         => t('New textarea'),
+      '#type'          => 'textarea',
       '#default_value' => '',
     ),
   );
@@ -191,6 +199,10 @@ function config_builder_form_builder_types() {
 
 /**
  * Implements hook_form_builder_properties().
+ *
+ * @param $form_type
+ *
+ * @return array
  */
 function config_builder_ui_form_builder_properties($form_type) {
   $properties = array();
@@ -200,18 +212,25 @@ function config_builder_ui_form_builder_properties($form_type) {
     );
   }
   drupal_alter('config_builder_form_builder_properties', $properties, $form_type);
+
   return $properties;
 }
 
 /**
  * Configuration form for the "tree" property.
+ *
+ * @param $form_state
+ * @param $form_type
+ * @param $element
+ *
+ * @return array
  */
-function config_builder_ui_property_tree_form(&$form_state, $form_type, $element, $property) {
+function config_builder_ui_property_tree_form(&$form_state, $form_type, $element) {
   $form = array();
 
   $form['tree'] = array(
-    '#title' => t('Tree'),
-    '#type' => 'checkbox',
+    '#title'         => t('Tree'),
+    '#type'          => 'checkbox',
     '#default_value' => $element['#tree'],
   );
 
