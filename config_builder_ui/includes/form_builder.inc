@@ -8,16 +8,19 @@
  * Load Form Builder form.
  */
 function _config_builder_form_builder_load_form($config, $form_id) {
-  $form = form_builder_cache_load('config_builder', $form_id);
+  $loader = FormBuilderLoader::instance();
+  $form   = $loader->fromCache('config_builder', $form_id);
 
   if ($form === FALSE) {
-    $form = array();
+    $form = $loader->fromStorage('config_builder', $form_id);
 
     if (!empty($config->name) && isset($config->fapi)) {
-      $form = is_array($config->fapi) ? $config->fapi : array();
-      _config_builder_form_builder_prepare_element_recurse($form);
-      form_builder_cache_save('config_builder', $form_id, $form);
+      $form_array = is_array($config->fapi) ? $config->fapi : array();
+      $form_array += $form->getFormArray();
+      _config_builder_form_builder_prepare_element_recurse($form_array);
+      $form = FormBuilderFormBase::fromArray($form_array);
     }
+    $form->save();
   }
 
   return $form;
